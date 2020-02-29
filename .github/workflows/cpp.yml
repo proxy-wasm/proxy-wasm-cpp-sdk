@@ -1,0 +1,74 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: C++
+
+on:
+
+  pull_request:
+    branches:
+    - master
+
+  push:
+    branches:
+    - master
+
+jobs:
+
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Format (clang-format)
+      run: |
+        sudo apt-get install clang-format-9
+        find . -name "*.h" -o -name "*.cc" -o -name "*.proto" | grep -v ".pb." | xargs -n1 clang-format-9 -i
+        git diff --exit-code
+
+    - name: Format (buildifier)
+      run: |
+        go get -u github.com/bazelbuild/buildtools/buildifier
+        export PATH=$PATH:$(go env GOPATH)/bin
+        find . -name "BUILD" | xargs -n1 buildifier -mode=check
+
+    - name: Format (addlicense)
+      run: |
+        go get -u github.com/google/addlicense
+        export PATH=$PATH:$(go env GOPATH)/bin
+        addlicense -check .
+
+  protobuf:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install protobuf v3.9.1
+      run: |
+        git clone https://github.com/protocolbuffers/protobuf
+        cd protobuf
+        git checkout v3.9.1
+        ./autogen.sh
+        ./configure
+        make
+        sudo make install
+        sudo ldconfig
+
+    - name: Re-generate and verify protobuf artifacts
+      run: |
+        rm *.pb.{cc,h}
+        make
+        git diff --exit-code -G "(^[^ /])|(^\s+[^\*])" *.pb.{cc,h}
