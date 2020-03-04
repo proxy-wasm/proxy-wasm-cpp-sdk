@@ -45,7 +45,7 @@ class Context;
 #if WASM_EXCEPTIONS
 class ProxyException : std::runtime_error {
 public:
-  ProxyException(const std::string& message) : std::runtime_error(message) {}
+  ProxyException(const std::string &message) : std::runtime_error(message) {}
 };
 #endif
 
@@ -85,9 +85,9 @@ inline void logAbort(StringView logMessag) {
 // Buffers coming into the WASM filter.
 class WasmData {
 public:
-  WasmData(const char* data, size_t size) : data_(data), size_(size) {}
-  ~WasmData() { ::free(const_cast<char*>(data_)); }
-  const char* data() { return data_; }
+  WasmData(const char *data, size_t size) : data_(data), size_(size) {}
+  ~WasmData() { ::free(const_cast<char *>(data_)); }
+  const char *data() { return data_; }
   size_t size() { return size_; }
   StringView view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
@@ -98,11 +98,11 @@ public:
     return p;
   }
 
-  WasmData& operator=(const WasmData&) = delete;
-  WasmData(const WasmData&) = delete;
+  WasmData &operator=(const WasmData &) = delete;
+  WasmData(const WasmData &) = delete;
 
 private:
-  const char* data_;
+  const char *data_;
   size_t size_;
 };
 typedef std::unique_ptr<WasmData> WasmDataPtr;
@@ -112,16 +112,16 @@ inline std::vector<std::pair<StringView, StringView>> WasmData::pairs() {
   if (!data())
     return result;
   auto p = data();
-  int n = *reinterpret_cast<const int*>(p);
+  int n = *reinterpret_cast<const int *>(p);
   p += sizeof(int);
   result.resize(n);
   auto s = p + n * 8;
   for (int i = 0; i < n; i++) {
-    int size = *reinterpret_cast<const int*>(p);
+    int size = *reinterpret_cast<const int *>(p);
     p += sizeof(int);
     result[i].first = StringView(s, size);
     s += size + 1;
-    size = *reinterpret_cast<const int*>(p);
+    size = *reinterpret_cast<const int *>(p);
     p += sizeof(int);
     result[i].second = StringView(s, size);
     s += size + 1;
@@ -129,9 +129,9 @@ inline std::vector<std::pair<StringView, StringView>> WasmData::pairs() {
   return result;
 }
 
-template <typename Pairs> size_t pairsSize(const Pairs& result) {
+template <typename Pairs> size_t pairsSize(const Pairs &result) {
   size_t size = 4; // number of headers
-  for (auto& p : result) {
+  for (auto &p : result) {
     size += 8;                   // size of key, size of value
     size += p.first.size() + 1;  // null terminated key
     size += p.second.size() + 1; // null terminated value
@@ -139,17 +139,17 @@ template <typename Pairs> size_t pairsSize(const Pairs& result) {
   return size;
 }
 
-template <typename Pairs> void marshalPairs(const Pairs& result, char* buffer) {
-  char* b = buffer;
-  *reinterpret_cast<uint32_t*>(b) = result.size();
+template <typename Pairs> void marshalPairs(const Pairs &result, char *buffer) {
+  char *b = buffer;
+  *reinterpret_cast<uint32_t *>(b) = result.size();
   b += sizeof(uint32_t);
-  for (auto& p : result) {
-    *reinterpret_cast<uint32_t*>(b) = p.first.size();
+  for (auto &p : result) {
+    *reinterpret_cast<uint32_t *>(b) = p.first.size();
     b += sizeof(uint32_t);
-    *reinterpret_cast<uint32_t*>(b) = p.second.size();
+    *reinterpret_cast<uint32_t *>(b) = p.second.size();
     b += sizeof(uint32_t);
   }
-  for (auto& p : result) {
+  for (auto &p : result) {
     memcpy(b, p.first.data(), p.first.size());
     b += p.first.size();
     *b++ = 0;
@@ -159,27 +159,27 @@ template <typename Pairs> void marshalPairs(const Pairs& result, char* buffer) {
   }
 }
 
-template <typename Pairs> void exportPairs(const Pairs& pairs, const char** ptr, size_t* size_ptr) {
+template <typename Pairs> void exportPairs(const Pairs &pairs, const char **ptr, size_t *size_ptr) {
   if (pairs.empty()) {
     *ptr = nullptr;
     *size_ptr = 0;
     return;
   }
   size_t size = pairsSize(pairs);
-  char* buffer = static_cast<char*>(::malloc(size));
+  char *buffer = static_cast<char *>(::malloc(size));
   marshalPairs(pairs, buffer);
   *size_ptr = size;
 }
 
 struct PairHash {
-  template <typename T, typename U> std::size_t operator()(const std::pair<T, U>& x) const {
+  template <typename T, typename U> std::size_t operator()(const std::pair<T, U> &x) const {
     return std::hash<T>()(x.first) + std::hash<U>()(x.second);
   }
 };
 
 struct Tuple3Hash {
   template <typename T, typename U, typename V>
-  std::size_t operator()(const std::tuple<T, U, V>& x) const {
+  std::size_t operator()(const std::tuple<T, U, V> &x) const {
     return std::hash<T>()(std::get<0>(x)) + std::hash<U>()(std::get<1>(x)) +
            std::hash<V>()(std::get<2>(x));
   }
@@ -192,7 +192,7 @@ public:
   GrpcCallHandlerBase() {}
   virtual ~GrpcCallHandlerBase() {}
 
-  RootContext* context() { return context_; }
+  RootContext *context() { return context_; }
 
   void cancel();
 
@@ -203,7 +203,7 @@ public:
 private:
   friend class RootContext;
 
-  RootContext* context_{nullptr};
+  RootContext *context_{nullptr};
   uint32_t token_;
 };
 
@@ -220,12 +220,13 @@ public:
   GrpcStreamHandlerBase() {}
   virtual ~GrpcStreamHandlerBase() {}
 
-  RootContext* context() { return context_; }
+  RootContext *context() { return context_; }
 
-  // NB: with end_of_stream == true, callbacks can still occur: reset() to prevent further
-  // callbacks.
+  // NB: with end_of_stream == true, callbacks can still occur: reset() to
+  // prevent further callbacks.
   void send(StringView message, bool end_of_stream);
-  void close(); // NB: callbacks can still occur: reset() to prevent further callbacks.
+  void close(); // NB: callbacks can still occur: reset() to prevent further
+                // callbacks.
   void reset();
 
   virtual void onCreateInitialMetadata(uint32_t /* headers */) {}
@@ -241,7 +242,7 @@ protected:
 
   bool local_close_{false};
   bool remote_close_{false};
-  RootContext* context_{nullptr};
+  RootContext *context_{nullptr};
   uint32_t token_;
 };
 
@@ -251,7 +252,7 @@ public:
   GrpcStreamHandler() : GrpcStreamHandlerBase() {}
   virtual ~GrpcStreamHandler() {}
 
-  void send(const Request& message, bool end_of_stream) {
+  void send(const Request &message, bool end_of_stream) {
     std::string output;
     if (!message.SerializeToString(&output)) {
       return;
@@ -274,12 +275,13 @@ public:
   // Make this context the effective context for calls out of the VM.
   WasmResult setEffectiveContext();
 
-  virtual RootContext* asRoot() { return nullptr; }
-  virtual Context* asContext() { return nullptr; }
+  virtual RootContext *asRoot() { return nullptr; }
+  virtual Context *asContext() { return nullptr; }
 
   virtual void onCreate() {}
   virtual bool onDoneBase() = 0;
-  // Called to indicate that no more calls will come and this context is being deleted.
+  // Called to indicate that no more calls will come and this context is being
+  // deleted.
   virtual void onDelete() {} // Called when the stream or VM is being deleted.
 
   using HttpCallCallback =
@@ -290,7 +292,8 @@ private:
   uint32_t id_;
 };
 
-// A context unique for each root_id for a use-case (e.g. filter) compiled into module.
+// A context unique for each root_id for a use-case (e.g. filter) compiled into
+// module.
 class RootContext : public ContextBase {
 public:
   RootContext(uint32_t id, StringView root_id) : ContextBase(id), root_id_(root_id) {}
@@ -298,16 +301,17 @@ public:
 
   StringView root_id() { return root_id_; }
 
-  RootContext* asRoot() override { return this; }
-  Context* asContext() override { return nullptr; }
+  RootContext *asRoot() override { return this; }
+  Context *asContext() override { return nullptr; }
 
-  // Can be used to validate the configuration (e.g. in the control plane). Returns false if the
-  // configuration is invalid.
-  virtual bool validateConfiguration(size_t /* configuration_size */) { return true; }
-  // Called once when the VM loads and once when each hook loads and whenever configuration changes.
+  // Can be used to validate the configuration (e.g. in the control plane).
   // Returns false if the configuration is invalid.
+  virtual bool validateConfiguration(size_t /* configuration_size */) { return true; }
+  // Called once when the VM loads and once when each hook loads and whenever
+  // configuration changes. Returns false if the configuration is invalid.
   virtual bool onConfigure(size_t /* configuration_size */) { return true; }
-  // Called when each hook loads.  Returns false if the configuration is invalid.
+  // Called when each hook loads.  Returns false if the configuration is
+  // invalid.
   virtual bool onStart(size_t /* vm_configuration_size */) { return true; }
   // Called when the timer goes off.
   virtual void onTick() {}
@@ -326,18 +330,18 @@ public:
   virtual void onGrpcReceive(uint32_t token, size_t body_size);
   virtual void onGrpcClose(uint32_t token, GrpcStatus status);
 
-  // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable
-  // this interface. Returns false on setup error.
-  WasmResult httpCall(StringView uri, const HeaderStringPairs& request_headers,
-                      StringView request_body, const HeaderStringPairs& request_trailers,
+  // Default high level HTTP/gRPC interface.  NB: overriding the low level
+  // interface will disable this interface. Returns false on setup error.
+  WasmResult httpCall(StringView uri, const HeaderStringPairs &request_headers,
+                      StringView request_body, const HeaderStringPairs &request_trailers,
                       uint32_t timeout_milliseconds, HttpCallCallback callback);
-  // NB: the message is the response if status == OK and an error message otherwise.
-  // Returns false on setup error.
+  // NB: the message is the response if status == OK and an error message
+  // otherwise. Returns false on setup error.
   WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-                            const google::protobuf::MessageLite& request,
+                            const google::protobuf::MessageLite &request,
                             uint32_t timeout_milliseconds, GrpcSimpleCallCallback callback);
   WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-                            const google::protobuf::MessageLite& request,
+                            const google::protobuf::MessageLite &request,
                             uint32_t timeout_milliseconds,
                             std::function<void(size_t body_size)> success_callback,
                             std::function<void(GrpcStatus status)> failure_callback) {
@@ -353,7 +357,7 @@ public:
   }
   // Returns false on setup error.
   WasmResult grpcCallHandler(StringView service, StringView service_name, StringView method_name,
-                             const google::protobuf::MessageLite& request,
+                             const google::protobuf::MessageLite &request,
                              uint32_t timeout_milliseconds,
                              std::unique_ptr<GrpcCallHandlerBase> handler);
   // Returns false on setup error.
@@ -373,18 +377,19 @@ private:
   std::unordered_map<uint32_t, std::unique_ptr<GrpcStreamHandlerBase>> grpc_streams_;
 };
 
-RootContext* getRoot(StringView root_id);
+RootContext *getRoot(StringView root_id);
 
-// Context for a stream.  The distinguished context id == 0 is used for non-stream calls.
+// Context for a stream.  The distinguished context id == 0 is used for
+// non-stream calls.
 class Context : public ContextBase {
 public:
-  Context(uint32_t id, RootContext* root) : ContextBase(id), root_(root) {}
+  Context(uint32_t id, RootContext *root) : ContextBase(id), root_(root) {}
   virtual ~Context() {}
 
-  RootContext* root() { return root_; }
+  RootContext *root() { return root_; }
 
-  RootContext* asRoot() override { return nullptr; }
-  Context* asContext() override { return this; }
+  RootContext *asRoot() override { return nullptr; }
+  Context *asContext() override { return this; }
 
   virtual FilterStatus onNewConnection() { return FilterStatus::Continue; }
   virtual FilterStatus onDownstreamData(size_t, bool) { return FilterStatus::Continue; }
@@ -424,14 +429,15 @@ private:
     return true;
   }
 
-  RootContext* root_{};
+  RootContext *root_{};
 };
 
-// Returns nullptr if the Context no longer exists (i.e. the stream has been destroyed).
-Context* getContext(uint32_t context_id);
+// Returns nullptr if the Context no longer exists (i.e. the stream has been
+// destroyed).
+Context *getContext(uint32_t context_id);
 
 using RootFactory = std::function<std::unique_ptr<RootContext>(uint32_t id, StringView root_id)>;
-using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext* root)>;
+using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext *root)>;
 
 // Create a factory from a class name.
 #define ROOT_FACTORY(_c)                                                                           \
@@ -439,12 +445,13 @@ using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootC
     return std::make_unique<_c>(id, root_id);                                                      \
   }
 #define CONTEXT_FACTORY(_c)                                                                        \
-  [](uint32_t id, RootContext* root) -> std::unique_ptr<Context> {                                 \
+  [](uint32_t id, RootContext *root) -> std::unique_ptr<Context> {                                 \
     return std::make_unique<_c>(id, root);                                                         \
   }
 
 // Register Context factory.
-// e.g. static RegisterContextFactory register_MyContext(CONTEXT_FACTORY(MyContext));
+// e.g. static RegisterContextFactory
+// register_MyContext(CONTEXT_FACTORY(MyContext));
 struct RegisterContextFactory {
   RegisterContextFactory(ContextFactory context_factory, RootFactory root_factory,
                          StringView root_id = "");
@@ -454,16 +461,9 @@ struct RegisterContextFactory {
       : RegisterContextFactory(context_factory, nullptr, root_id) {}
 };
 
-inline WasmDataPtr getConfiguration() {
-  const char* value_ptr = nullptr;
-  size_t value_size = 0;
-  CHECK_RESULT(proxy_get_configuration(&value_ptr, &value_size));
-  return std::make_unique<WasmData>(value_ptr, value_size);
-}
-
 inline std::pair<uint32_t, WasmDataPtr> getStatus() {
   uint32_t code = 0;
-  const char* value_ptr = nullptr;
+  const char *value_ptr = nullptr;
   size_t value_size = 0;
   CHECK_RESULT(proxy_get_status(&code, &value_ptr, &value_size));
   return std::make_pair(code, std::make_unique<WasmData>(value_ptr, value_size));
@@ -476,8 +476,8 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
     size += part.size() + 1; // null terminated string value
   }
 
-  char* buffer = static_cast<char*>(::malloc(size));
-  char* b = buffer;
+  char *buffer = static_cast<char *>(::malloc(size));
+  char *b = buffer;
 
   for (auto part : parts) {
     memcpy(b, part.data(), part.size());
@@ -485,7 +485,7 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
     *b++ = 0;
   }
 
-  const char* value_ptr = nullptr;
+  const char *value_ptr = nullptr;
   size_t value_size = 0;
   auto result = proxy_get_property(buffer, size, &value_ptr, &value_size);
   ::free(buffer);
@@ -499,18 +499,18 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
 // Durations are represented as int64 nanoseconds.
 // Timestamps are represented as int64 Unix nanoseconds.
 // Strings and bytes are represented as std::string.
-template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {
+template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T *out) {
   auto buf = getProperty(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
   }
-  *out = *reinterpret_cast<const T*>(buf.value()->data());
+  *out = *reinterpret_cast<const T *>(buf.value()->data());
   return true;
 }
 
 // Specialization for bytes and string values
 template <>
-inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::string* out) {
+inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::string *out) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
@@ -521,7 +521,7 @@ inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::
 
 // Specialization for message types (including struct value for lists and maps)
 template <typename T>
-inline bool getMessageValue(std::initializer_list<StringView> parts, T* value_ptr) {
+inline bool getMessageValue(std::initializer_list<StringView> parts, T *value_ptr) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
@@ -547,9 +547,9 @@ inline WasmResult continueRequest() { return proxy_continue_request(); }
 inline WasmResult continueResponse() { return proxy_continue_response(); }
 inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_code_details,
                                     StringView body,
-                                    const HeaderStringPairs& additional_response_headers,
+                                    const HeaderStringPairs &additional_response_headers,
                                     GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
-  const char* ptr = nullptr;
+  const char *ptr = nullptr;
   size_t size = 0;
   exportPairs(additional_response_headers, &ptr, &size);
   return proxy_send_local_response(response_code, response_code_details.data(),
@@ -559,9 +559,9 @@ inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_
 inline void clearRouteCache() { proxy_clear_route_cache(); }
 
 // SharedData
-inline WasmResult getSharedData(StringView key, WasmDataPtr* value, uint32_t* cas = nullptr) {
+inline WasmResult getSharedData(StringView key, WasmDataPtr *value, uint32_t *cas = nullptr) {
   uint32_t dummy_cas;
-  const char* value_ptr = nullptr;
+  const char *value_ptr = nullptr;
   size_t value_size = 0;
   if (!cas)
     cas = &dummy_cas;
@@ -577,7 +577,7 @@ inline WasmResult setSharedData(StringView key, StringView value, uint32_t cas =
   return proxy_set_shared_data(key.data(), key.size(), value.data(), value.size(), cas);
 }
 
-inline WasmDataPtr getSharedDataValue(StringView key, uint32_t* cas = nullptr) {
+inline WasmDataPtr getSharedDataValue(StringView key, uint32_t *cas = nullptr) {
   WasmDataPtr data;
   auto result = getSharedData(key, &data, cas);
   if (result != WasmResult::Ok) {
@@ -587,11 +587,11 @@ inline WasmDataPtr getSharedDataValue(StringView key, uint32_t* cas = nullptr) {
 }
 
 // SharedQueue
-inline WasmResult registerSharedQueue(StringView queue_name, uint32_t* token) {
+inline WasmResult registerSharedQueue(StringView queue_name, uint32_t *token) {
   return proxy_register_shared_queue(queue_name.data(), queue_name.size(), token);
 }
 
-inline WasmResult resolveSharedQueue(StringView vm_id, StringView queue_name, uint32_t* token) {
+inline WasmResult resolveSharedQueue(StringView vm_id, StringView queue_name, uint32_t *token) {
   return proxy_resolve_shared_queue(vm_id.data(), vm_id.size(), queue_name.data(),
                                     queue_name.size(), token);
 }
@@ -600,8 +600,8 @@ inline WasmResult enqueueSharedQueue(uint32_t token, StringView data) {
   return proxy_enqueue_shared_queue(token, data.data(), data.size());
 }
 
-inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr* data) {
-  const char* data_ptr = nullptr;
+inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr *data) {
+  const char *data_ptr = nullptr;
   size_t data_size = 0;
   auto result = proxy_dequeue_shared_queue(token, &data_ptr, &data_size);
   *data = std::make_unique<WasmData>(data_ptr, data_size);
@@ -609,169 +609,169 @@ inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr* data) {
 }
 
 // Headers/Trailers
-inline WasmResult addHeaderMapValue(HeaderMapType type, StringView key, StringView value) {
+inline WasmResult addHeaderMapValue(WasmHeaderMapType type, StringView key, StringView value) {
   return proxy_add_header_map_value(type, key.data(), key.size(), value.data(), value.size());
 }
 
-inline WasmDataPtr getHeaderMapValue(HeaderMapType type, StringView key) {
-  const char* value_ptr = nullptr;
+inline WasmDataPtr getHeaderMapValue(WasmHeaderMapType type, StringView key) {
+  const char *value_ptr = nullptr;
   size_t value_size = 0;
   proxy_get_header_map_value(type, key.data(), key.size(), &value_ptr, &value_size);
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline WasmResult replaceHeaderMapValue(HeaderMapType type, StringView key, StringView value) {
+inline WasmResult replaceHeaderMapValue(WasmHeaderMapType type, StringView key, StringView value) {
   return proxy_replace_header_map_value(type, key.data(), key.size(), value.data(), value.size());
 }
 
-inline WasmResult removeHeaderMapValue(HeaderMapType type, StringView key) {
+inline WasmResult removeHeaderMapValue(WasmHeaderMapType type, StringView key) {
   return proxy_remove_header_map_value(type, key.data(), key.size());
 }
 
-inline WasmDataPtr getHeaderMapPairs(HeaderMapType type) {
-  const char* ptr = nullptr;
+inline WasmDataPtr getHeaderMapPairs(WasmHeaderMapType type) {
+  const char *ptr = nullptr;
   size_t size = 0;
   proxy_get_header_map_pairs(type, &ptr, &size);
   return std::make_unique<WasmData>(ptr, size);
 }
 
-inline WasmResult setHeaderMapPairs(HeaderMapType type, const HeaderStringPairs& pairs) {
-  const char* ptr = nullptr;
+inline WasmResult setHeaderMapPairs(WasmHeaderMapType type, const HeaderStringPairs &pairs) {
+  const char *ptr = nullptr;
   size_t size = 0;
   exportPairs(pairs, &ptr, &size);
   return proxy_set_header_map_pairs(type, ptr, size);
 }
 
-inline WasmResult getHeaderMapSize(HeaderMapType type, size_t* size) {
+inline WasmResult getHeaderMapSize(WasmHeaderMapType type, size_t *size) {
   return proxy_get_header_map_size(type, size);
 }
 
 inline WasmResult addRequestHeader(StringView key, StringView value) {
-  return addHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
+  return addHeaderMapValue(WasmHeaderMapType::RequestHeaders, key, value);
 }
 inline WasmDataPtr getRequestHeader(StringView key) {
-  return getHeaderMapValue(HeaderMapType::RequestHeaders, key);
+  return getHeaderMapValue(WasmHeaderMapType::RequestHeaders, key);
 }
 inline WasmResult replaceRequestHeader(StringView key, StringView value) {
-  return replaceHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
+  return replaceHeaderMapValue(WasmHeaderMapType::RequestHeaders, key, value);
 }
 inline WasmResult removeRequestHeader(StringView key) {
-  return removeHeaderMapValue(HeaderMapType::RequestHeaders, key);
+  return removeHeaderMapValue(WasmHeaderMapType::RequestHeaders, key);
 }
 inline WasmDataPtr getRequestHeaderPairs() {
-  return getHeaderMapPairs(HeaderMapType::RequestHeaders);
+  return getHeaderMapPairs(WasmHeaderMapType::RequestHeaders);
 }
-inline WasmResult setRequestHeaderPairs(const HeaderStringPairs& pairs) {
-  return setHeaderMapPairs(HeaderMapType::RequestHeaders, pairs);
+inline WasmResult setRequestHeaderPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(WasmHeaderMapType::RequestHeaders, pairs);
 }
-inline WasmResult getRequestHeaderSize(size_t* size) {
-  return getHeaderMapSize(HeaderMapType::RequestHeaders, size);
+inline WasmResult getRequestHeaderSize(size_t *size) {
+  return getHeaderMapSize(WasmHeaderMapType::RequestHeaders, size);
 }
 
 inline WasmResult addRequestTrailer(StringView key, StringView value) {
-  return addHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
+  return addHeaderMapValue(WasmHeaderMapType::RequestTrailers, key, value);
 }
 inline WasmDataPtr getRequestTrailer(StringView key) {
-  return getHeaderMapValue(HeaderMapType::RequestTrailers, key);
+  return getHeaderMapValue(WasmHeaderMapType::RequestTrailers, key);
 }
 inline WasmResult replaceRequestTrailer(StringView key, StringView value) {
-  return replaceHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
+  return replaceHeaderMapValue(WasmHeaderMapType::RequestTrailers, key, value);
 }
 inline WasmResult removeRequestTrailer(StringView key) {
-  return removeHeaderMapValue(HeaderMapType::RequestTrailers, key);
+  return removeHeaderMapValue(WasmHeaderMapType::RequestTrailers, key);
 }
 inline WasmDataPtr getRequestTrailerPairs() {
-  return getHeaderMapPairs(HeaderMapType::RequestTrailers);
+  return getHeaderMapPairs(WasmHeaderMapType::RequestTrailers);
 }
-inline WasmResult setRequestTrailerPairs(const HeaderStringPairs& pairs) {
-  return setHeaderMapPairs(HeaderMapType::RequestTrailers, pairs);
+inline WasmResult setRequestTrailerPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(WasmHeaderMapType::RequestTrailers, pairs);
 }
-inline WasmResult getRequestTrailerSize(size_t* size) {
-  return getHeaderMapSize(HeaderMapType::RequestTrailers, size);
+inline WasmResult getRequestTrailerSize(size_t *size) {
+  return getHeaderMapSize(WasmHeaderMapType::RequestTrailers, size);
 }
 
 inline WasmResult addResponseHeader(StringView key, StringView value) {
-  return addHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
+  return addHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key, value);
 }
 inline WasmDataPtr getResponseHeader(StringView key) {
-  return getHeaderMapValue(HeaderMapType::ResponseHeaders, key);
+  return getHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key);
 }
 inline WasmResult replaceResponseHeader(StringView key, StringView value) {
-  return replaceHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
+  return replaceHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key, value);
 }
 inline WasmResult removeResponseHeader(StringView key) {
-  return removeHeaderMapValue(HeaderMapType::ResponseHeaders, key);
+  return removeHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key);
 }
 inline WasmDataPtr getResponseHeaderPairs() {
-  return getHeaderMapPairs(HeaderMapType::ResponseHeaders);
+  return getHeaderMapPairs(WasmHeaderMapType::ResponseHeaders);
 }
-inline WasmResult setResponseHeaderPairs(const HeaderStringPairs& pairs) {
-  return setHeaderMapPairs(HeaderMapType::ResponseHeaders, pairs);
+inline WasmResult setResponseHeaderPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(WasmHeaderMapType::ResponseHeaders, pairs);
 }
-inline WasmResult getResponseHeaderSize(size_t* size) {
-  return getHeaderMapSize(HeaderMapType::ResponseHeaders, size);
+inline WasmResult getResponseHeaderSize(size_t *size) {
+  return getHeaderMapSize(WasmHeaderMapType::ResponseHeaders, size);
 }
 
 inline WasmResult addResponseTrailer(StringView key, StringView value) {
-  return addHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
+  return addHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key, value);
 }
 inline WasmDataPtr getResponseTrailer(StringView key) {
-  return getHeaderMapValue(HeaderMapType::ResponseTrailers, key);
+  return getHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key);
 }
 inline WasmResult replaceResponseTrailer(StringView key, StringView value) {
-  return replaceHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
+  return replaceHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key, value);
 }
 inline WasmResult removeResponseTrailer(StringView key) {
-  return removeHeaderMapValue(HeaderMapType::ResponseTrailers, key);
+  return removeHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key);
 }
 inline WasmDataPtr getResponseTrailerPairs() {
-  return getHeaderMapPairs(HeaderMapType::ResponseTrailers);
+  return getHeaderMapPairs(WasmHeaderMapType::ResponseTrailers);
 }
-inline WasmResult setResponseTrailerPairs(const HeaderStringPairs& pairs) {
-  return setHeaderMapPairs(HeaderMapType::ResponseTrailers, pairs);
+inline WasmResult setResponseTrailerPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(WasmHeaderMapType::ResponseTrailers, pairs);
 }
-inline WasmResult getResponseTrailerSize(size_t* size) {
-  return getHeaderMapSize(HeaderMapType::ResponseTrailers, size);
+inline WasmResult getResponseTrailerSize(size_t *size) {
+  return getHeaderMapSize(WasmHeaderMapType::ResponseTrailers, size);
 }
 
 // Buffer
-inline WasmDataPtr getBufferBytes(BufferType type, size_t start, size_t length) {
-  const char* ptr = nullptr;
+inline WasmDataPtr getBufferBytes(WasmBufferType type, size_t start, size_t length) {
+  const char *ptr = nullptr;
   size_t size = 0;
   proxy_get_buffer_bytes(type, start, length, &ptr, &size);
   return std::make_unique<WasmData>(ptr, size);
 }
 
-inline WasmResult getBufferStatus(BufferType type, size_t* size, uint32_t* flags) {
+inline WasmResult getBufferStatus(WasmBufferType type, size_t *size, uint32_t *flags) {
   return proxy_get_buffer_status(type, size, flags);
 }
 
 // HTTP
 
-inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs& headers, void** buffer_ptr,
-                                        size_t* size_ptr) {
+inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs &headers, void **buffer_ptr,
+                                        size_t *size_ptr) {
   if (headers.empty()) {
     *buffer_ptr = nullptr;
     *size_ptr = 0;
     return;
   }
   int size = 4; // number of headers
-  for (auto& p : headers) {
+  for (auto &p : headers) {
     size += 8;                   // size of key, size of value
     size += p.first.size() + 1;  // null terminated key
     size += p.second.size() + 1; // null terminated value
   }
-  char* buffer = static_cast<char*>(::malloc(size));
-  char* b = buffer;
-  *reinterpret_cast<int32_t*>(b) = headers.size();
+  char *buffer = static_cast<char *>(::malloc(size));
+  char *b = buffer;
+  *reinterpret_cast<int32_t *>(b) = headers.size();
   b += sizeof(int32_t);
-  for (auto& p : headers) {
-    *reinterpret_cast<int32_t*>(b) = p.first.size();
+  for (auto &p : headers) {
+    *reinterpret_cast<int32_t *>(b) = p.first.size();
     b += sizeof(int32_t);
-    *reinterpret_cast<int32_t*>(b) = p.second.size();
+    *reinterpret_cast<int32_t *>(b) = p.second.size();
     b += sizeof(int32_t);
   }
-  for (auto& p : headers) {
+  for (auto &p : headers) {
     memcpy(b, p.first.data(), p.first.size());
     b += p.first.size();
     *b++ = 0;
@@ -783,9 +783,9 @@ inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs& headers, void**
   *size_ptr = size;
 }
 
-inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs& request_headers,
-                               StringView request_body, const HeaderStringPairs& request_trailers,
-                               uint32_t timeout_milliseconds, uint32_t* token_ptr) {
+inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs &request_headers,
+                               StringView request_body, const HeaderStringPairs &request_trailers,
+                               uint32_t timeout_milliseconds, uint32_t *token_ptr) {
   void *headers_ptr = nullptr, *trailers_ptr = nullptr;
   size_t headers_size = 0, trailers_size = 0;
   MakeHeaderStringPairsBuffer(request_headers, &headers_ptr, &headers_size);
@@ -800,7 +800,7 @@ inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs& request_
 
 // Low level metrics interface.
 
-inline WasmResult defineMetric(MetricType type, StringView name, uint32_t* metric_id) {
+inline WasmResult defineMetric(MetricType type, StringView name, uint32_t *metric_id) {
   return proxy_define_metric(type, name.data(), name.size(), metric_id);
 }
 
@@ -812,7 +812,7 @@ inline WasmResult recordMetric(uint32_t metric_id, uint64_t value) {
   return proxy_record_metric(metric_id, value);
 }
 
-inline WasmResult getMetric(uint32_t metric_id, uint64_t* value) {
+inline WasmResult getMetric(uint32_t metric_id, uint64_t *value) {
   return proxy_get_metric(metric_id, value);
 }
 
@@ -829,10 +829,10 @@ struct MetricTag {
 };
 
 struct MetricBase {
-  MetricBase(MetricType t, const std::string& n) : type(t), name(n) {}
-  MetricBase(MetricType t, const std::string& n, const std::vector<MetricTag>& ts)
+  MetricBase(MetricType t, const std::string &n) : type(t), name(n) {}
+  MetricBase(MetricType t, const std::string &n, const std::vector<MetricTag> &ts)
       : type(t), name(n), tags(ts.begin(), ts.end()) {}
-  MetricBase(MetricType t, const std::string& n, const std::vector<MetricTag>& ts, std::string fs,
+  MetricBase(MetricType t, const std::string &n, const std::vector<MetricTag> &ts, std::string fs,
              std::string vs)
       : type(t), name(n), tags(ts.begin(), ts.end()), field_separator(fs), value_separator(vs) {}
 
@@ -845,18 +845,18 @@ struct MetricBase {
   std::string field_separator = "."; // used to separate two fields.
   std::string value_separator = "."; // used to separate a field from its value.
 
-  std::string prefixWithFields(const std::vector<std::string>& fields);
-  uint32_t resolveFullName(const std::string& n);
-  uint32_t resolveWithFields(const std::vector<std::string>& fields);
-  void partiallyResolveWithFields(const std::vector<std::string>& fields);
+  std::string prefixWithFields(const std::vector<std::string> &fields);
+  uint32_t resolveFullName(const std::string &n);
+  uint32_t resolveWithFields(const std::vector<std::string> &fields);
+  void partiallyResolveWithFields(const std::vector<std::string> &fields);
   std::string nameFromIdSlow(uint32_t id);
 };
 
 struct Metric : public MetricBase {
-  Metric(MetricType t, const std::string& n) : MetricBase(t, n) {}
-  Metric(MetricType t, const std::string& n, const std::vector<MetricTag>& ts)
+  Metric(MetricType t, const std::string &n) : MetricBase(t, n) {}
+  Metric(MetricType t, const std::string &n, const std::vector<MetricTag> &ts)
       : MetricBase(t, n, ts) {}
-  Metric(MetricType t, const std::string& n, const std::vector<MetricTag>& ts,
+  Metric(MetricType t, const std::string &n, const std::vector<MetricTag> &ts,
          std::string field_separator, std::string value_separator)
       : MetricBase(t, n, ts, field_separator, value_separator) {}
 
@@ -867,12 +867,12 @@ struct Metric : public MetricBase {
   template <typename... Fields> Metric partiallyResolve(Fields... tags);
 };
 
-inline std::string MetricBase::prefixWithFields(const std::vector<std::string>& fields) {
+inline std::string MetricBase::prefixWithFields(const std::vector<std::string> &fields) {
   size_t s = prefix.size();
   for (size_t i = 0; i < fields.size(); i++) {
     s += tags[i].name.size() + value_separator.size();
   }
-  for (auto& f : fields) {
+  for (auto &f : fields) {
     s += f.size() + field_separator.size();
   }
   std::string n;
@@ -887,7 +887,7 @@ inline std::string MetricBase::prefixWithFields(const std::vector<std::string>& 
   return n;
 }
 
-inline uint32_t MetricBase::resolveWithFields(const std::vector<std::string>& fields) {
+inline uint32_t MetricBase::resolveWithFields(const std::vector<std::string> &fields) {
   if (fields.size() != tags.size()) {
 #if WASM_EXCEPTIONS
     throw ProxyException("metric fields.size() != tags.size()");
@@ -898,7 +898,7 @@ inline uint32_t MetricBase::resolveWithFields(const std::vector<std::string>& fi
   return resolveFullName(prefixWithFields(fields) + name);
 }
 
-inline void MetricBase::partiallyResolveWithFields(const std::vector<std::string>& fields) {
+inline void MetricBase::partiallyResolveWithFields(const std::vector<std::string> &fields) {
   if (fields.size() >= tags.size()) {
 #if WASM_EXCEPTIONS
     throw ProxyException("metric fields.size() >= tags.size()");
@@ -914,7 +914,7 @@ template <typename T> inline std::string toString(T t) { return std::to_string(t
 
 template <> inline std::string toString(StringView t) { return std::string(t); }
 
-template <> inline std::string toString(const char* t) { return std::string(t); }
+template <> inline std::string toString(const char *t) { return std::string(t); }
 
 template <> inline std::string toString(std::string t) { return t; }
 
@@ -924,7 +924,7 @@ template <typename T> struct StringToStringView { typedef T type; };
 
 template <> struct StringToStringView<std::string> { typedef StringView type; };
 
-inline uint32_t MetricBase::resolveFullName(const std::string& n) {
+inline uint32_t MetricBase::resolveFullName(const std::string &n) {
   auto it = metric_ids.find(n);
   if (it == metric_ids.end()) {
     uint32_t metric_id;
@@ -936,7 +936,7 @@ inline uint32_t MetricBase::resolveFullName(const std::string& n) {
 }
 
 inline std::string MetricBase::nameFromIdSlow(uint32_t id) {
-  for (auto& p : metric_ids)
+  for (auto &p : metric_ids)
     if (p.second == id)
       return p.first;
   return "";
@@ -976,30 +976,30 @@ template <typename... Fields> inline uint64_t Metric::get(Fields... f) {
 
 template <typename T> struct MetricTagDescriptor {
   MetricTagDescriptor(StringView n) : name(n) {}
-  MetricTagDescriptor(const char* n) : name(n) {}
+  MetricTagDescriptor(const char *n) : name(n) {}
   typedef T type;
   StringView name;
 };
 
-template <typename T> inline MetricTag toMetricTag(const MetricTagDescriptor<T>&) { return {}; }
+template <typename T> inline MetricTag toMetricTag(const MetricTagDescriptor<T> &) { return {}; }
 
-template <> inline MetricTag toMetricTag(const MetricTagDescriptor<const char*>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<const char *> &d) {
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
-template <> inline MetricTag toMetricTag(const MetricTagDescriptor<std::string>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<std::string> &d) {
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
-template <> inline MetricTag toMetricTag(const MetricTagDescriptor<StringView>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<StringView> &d) {
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
-template <> inline MetricTag toMetricTag(const MetricTagDescriptor<int>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<int> &d) {
   return {std::string(d.name), MetricTag::TagType::Int};
 }
 
-template <> inline MetricTag toMetricTag(const MetricTagDescriptor<bool>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<bool> &d) {
   return {std::string(d.name), MetricTag::TagType::Bool};
 }
 
@@ -1041,7 +1041,7 @@ struct SimpleHistogram {
 };
 
 template <typename... Tags> struct Counter : public MetricBase {
-  static Counter<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+  static Counter<Tags...> *New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
   Counter<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
       : Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {
@@ -1053,7 +1053,7 @@ template <typename... Tags> struct Counter : public MetricBase {
   }
 
   template <typename... AdditionalTags>
-  Counter<AdditionalTags...>* extendAndResolve(Tags... f,
+  Counter<AdditionalTags...> *extendAndResolve(Tags... f,
                                                MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{toString(f)...};
     auto new_counter = Counter<AdditionalTags...>::New(name, fieldnames...);
@@ -1078,19 +1078,19 @@ template <typename... Tags> struct Counter : public MetricBase {
   }
 
 private:
-  Counter(const std::string& name, const std::vector<MetricTag>& tags)
+  Counter(const std::string &name, const std::vector<MetricTag> &tags)
       : MetricBase(MetricType::Counter, name, tags) {}
 };
 
 template <typename... Tags>
-inline Counter<Tags...>* Counter<Tags...>::New(StringView name,
+inline Counter<Tags...> *Counter<Tags...>::New(StringView name,
                                                MetricTagDescriptor<Tags>... descriptors) {
   return new Counter<Tags...>(std::string(name),
                               std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 template <typename... Tags> struct Gauge : public MetricBase {
-  static Gauge<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+  static Gauge<Tags...> *New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
   Gauge<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
       : Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
@@ -1101,7 +1101,7 @@ template <typename... Tags> struct Gauge : public MetricBase {
   }
 
   template <typename... AdditionalTags>
-  Gauge<AdditionalTags...>* extendAndResolve(Tags... f,
+  Gauge<AdditionalTags...> *extendAndResolve(Tags... f,
                                              MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{toString(f)...};
     auto new_gauge = Gauge<AdditionalTags...>::New(name, fieldnames...);
@@ -1124,19 +1124,19 @@ template <typename... Tags> struct Gauge : public MetricBase {
   }
 
 private:
-  Gauge(const std::string& name, const std::vector<MetricTag>& tags)
+  Gauge(const std::string &name, const std::vector<MetricTag> &tags)
       : MetricBase(MetricType::Gauge, name, tags) {}
 };
 
 template <typename... Tags>
-inline Gauge<Tags...>* Gauge<Tags...>::New(StringView name,
+inline Gauge<Tags...> *Gauge<Tags...>::New(StringView name,
                                            MetricTagDescriptor<Tags>... descriptors) {
   return new Gauge<Tags...>(std::string(name),
                             std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 template <typename... Tags> struct Histogram : public MetricBase {
-  static Histogram<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+  static Histogram<Tags...> *New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
   Histogram<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
       : Histogram<Tags...>(std::string(name),
@@ -1148,7 +1148,7 @@ template <typename... Tags> struct Histogram : public MetricBase {
   }
 
   template <typename... AdditionalTags>
-  Histogram<AdditionalTags...>*
+  Histogram<AdditionalTags...> *
   extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{toString(f)...};
     auto new_histogram = Histogram<AdditionalTags...>::New(name, fieldnames...);
@@ -1163,20 +1163,20 @@ template <typename... Tags> struct Histogram : public MetricBase {
   }
 
 private:
-  Histogram(const std::string& name, const std::vector<MetricTag>& tags)
+  Histogram(const std::string &name, const std::vector<MetricTag> &tags)
       : MetricBase(MetricType::Histogram, name, tags) {}
 };
 
 template <typename... Tags>
-inline Histogram<Tags...>* Histogram<Tags...>::New(StringView name,
+inline Histogram<Tags...> *Histogram<Tags...>::New(StringView name,
                                                    MetricTagDescriptor<Tags>... descriptors) {
   return new Histogram<Tags...>(std::string(name),
                                 std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 inline WasmResult grpcCall(StringView service, StringView service_name, StringView method_name,
-                           const google::protobuf::MessageLite& request,
-                           uint32_t timeout_milliseconds, uint32_t* token_ptr) {
+                           const google::protobuf::MessageLite &request,
+                           uint32_t timeout_milliseconds, uint32_t *token_ptr) {
   std::string serialized_request;
   request.SerializeToString(&serialized_request);
   return proxy_grpc_call(service.data(), service.size(), service_name.data(), service_name.size(),
@@ -1185,7 +1185,7 @@ inline WasmResult grpcCall(StringView service, StringView service_name, StringVi
 }
 
 inline WasmResult grpcStream(StringView service, StringView service_name, StringView method_name,
-                             uint32_t* token_ptr) {
+                             uint32_t *token_ptr) {
   return proxy_grpc_stream(service.data(), service.size(), service_name.data(), service_name.size(),
                            method_name.data(), method_name.size(), token_ptr);
 }
@@ -1198,9 +1198,9 @@ inline WasmResult grpcSend(uint32_t token, StringView message, bool end_stream) 
   return proxy_grpc_send(token, message.data(), message.size(), end_stream ? 1 : 0);
 }
 
-inline WasmResult RootContext::httpCall(StringView uri, const HeaderStringPairs& request_headers,
+inline WasmResult RootContext::httpCall(StringView uri, const HeaderStringPairs &request_headers,
                                         StringView request_body,
-                                        const HeaderStringPairs& request_trailers,
+                                        const HeaderStringPairs &request_trailers,
                                         uint32_t timeout_milliseconds, HttpCallCallback callback) {
   uint32_t token = 0;
   auto result = makeHttpCall(uri, request_headers, request_body, request_trailers,
@@ -1222,7 +1222,7 @@ inline void RootContext::onHttpCallResponse(uint32_t token, uint32_t headers, si
 
 inline WasmResult RootContext::grpcSimpleCall(StringView service, StringView service_name,
                                               StringView method_name,
-                                              const google::protobuf::MessageLite& request,
+                                              const google::protobuf::MessageLite &request,
                                               uint32_t timeout_milliseconds,
                                               Context::GrpcSimpleCallCallback callback) {
   uint32_t token = 0;
@@ -1333,7 +1333,8 @@ inline void GrpcStreamHandlerBase::doRemoteClose(GrpcStatus status) {
   auto token = token_;
   this->onRemoteClose(status);
   if (context->grpc_streams_.find(token) != context->grpc_streams_.end()) {
-    // We have not been deleted, e.g. by reset() in the onRemoteCall() virtual handler.
+    // We have not been deleted, e.g. by reset() in the onRemoteCall() virtual
+    // handler.
     remote_close_ = true;
     if (local_close_ && remote_close_) {
       context_->grpc_streams_.erase(token_);
@@ -1370,7 +1371,7 @@ inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status) {
 
 inline WasmResult RootContext::grpcCallHandler(StringView service, StringView service_name,
                                                StringView method_name,
-                                               const google::protobuf::MessageLite& request,
+                                               const google::protobuf::MessageLite &request,
                                                uint32_t timeout_milliseconds,
                                                std::unique_ptr<GrpcCallHandlerBase> handler) {
   uint32_t token = 0;

@@ -26,7 +26,8 @@
 
 enum class WasmResult : uint32_t {
   Ok = 0,
-  // The result could not be found, e.g. a provided key did not appear in a table.
+  // The result could not be found, e.g. a provided key did not appear in a
+  // table.
   NotFound = 1,
   // An argument was bad, e.g. did not not conform to the required range.
   BadArgument = 2,
@@ -48,6 +49,8 @@ enum class WasmResult : uint32_t {
   InternalFailure = 10,
   // The connection/stream/pipe was broken/closed unexpectedly.
   BrokenConnection = 11,
+  // Feature not implemented.
+  Unimplemented = 12,
 };
 
 #define _CASE(_e)                                                                                  \
@@ -67,11 +70,12 @@ inline std::string toString(WasmResult r) {
     _CASE(ResultMismatch);
     _CASE(InternalFailure);
     _CASE(BrokenConnection);
+    _CASE(Unimplemented);
   }
 }
 #undef _CASE
 
-enum class HeaderMapType : int32_t {
+enum class WasmHeaderMapType : int32_t {
   RequestHeaders = 0,   // During the onLog callback these are immutable
   RequestTrailers = 1,  // During the onLog callback these are immutable
   ResponseHeaders = 2,  // During the onLog callback these are immutable
@@ -83,16 +87,18 @@ enum class HeaderMapType : int32_t {
   HttpCallResponseTrailers = 8,    // Immutable
   MAX = 8,
 };
-enum class BufferType : int32_t {
+enum class WasmBufferType : int32_t {
   HttpRequestBody = 0,       // During the onLog callback these are immutable
   HttpResponseBody = 1,      // During the onLog callback these are immutable
   NetworkDownstreamData = 2, // During the onLog callback these are immutable
   NetworkUpstreamData = 3,   // During the onLog callback these are immutable
   HttpCallResponseBody = 4,  // Immutable
   GrpcReceiveBuffer = 5,     // Immutable
-  MAX = 5,
+  VmConfiguration = 6,       // Immutable
+  PluginConfiguration = 7,   // Immutable
+  MAX = 7,
 };
-enum class BufferFlags : int32_t {
+enum class WasmBufferFlags : int32_t {
   // These must be powers of 2.
   EndOfStream = 1,
 };

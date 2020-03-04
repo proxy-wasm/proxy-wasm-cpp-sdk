@@ -22,7 +22,7 @@
 
 #pragma once
 
-enum class LogLevel : int32_t { trace, debug, info, warn, error, critical };
+enum class LogLevel : int32_t { trace, debug, info, warn, error, critical, Max = critical };
 enum class FilterStatus : int32_t { Continue = 0, StopIteration = 1 };
 enum class FilterHeadersStatus : int32_t { Continue = 0, StopIteration = 1 };
 enum class FilterMetadataStatus : int32_t { Continue = 0 };
@@ -58,6 +58,7 @@ enum class MetricType : int32_t {
   Counter = 0,
   Gauge = 1,
   Histogram = 2,
+  Max = 2,
 };
 enum class PeerType : int32_t {
   Unknown = 0,
