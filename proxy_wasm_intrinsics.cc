@@ -19,10 +19,10 @@
 // Required Proxy-Wasm ABI version.
 extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 
-static std::unordered_map<std::string, RootFactory>* root_factories = nullptr;
-static std::unordered_map<std::string, ContextFactory>* context_factories = nullptr;
+static std::unordered_map<std::string, RootFactory> *root_factories = nullptr;
+static std::unordered_map<std::string, ContextFactory> *context_factories = nullptr;
 static std::unordered_map<int32_t, std::unique_ptr<ContextBase>> context_map;
-static std::unordered_map<std::string, RootContext*> root_context_map;
+static std::unordered_map<std::string, RootContext *> root_context_map;
 
 RegisterContextFactory::RegisterContextFactory(ContextFactory context_factory,
                                                RootFactory root_factory, StringView root_id) {
@@ -36,10 +36,10 @@ RegisterContextFactory::RegisterContextFactory(ContextFactory context_factory,
     (*root_factories)[std::string(root_id)] = root_factory;
 }
 
-static Context* ensureContext(uint32_t context_id, uint32_t root_context_id) {
+static Context *ensureContext(uint32_t context_id, uint32_t root_context_id) {
   auto e = context_map.insert(std::make_pair(context_id, nullptr));
   if (e.second) {
-    RootContext* root = context_map[root_context_id].get()->asRoot();
+    RootContext *root = context_map[root_context_id].get()->asRoot();
     std::string root_id = std::string(root->root_id());
     if (!context_factories) {
       e.first->second = std::make_unique<Context>(context_id, root);
@@ -56,12 +56,12 @@ static Context* ensureContext(uint32_t context_id, uint32_t root_context_id) {
   return e.first->second->asContext();
 }
 
-static RootContext* ensureRootContext(uint32_t context_id) {
+static RootContext *ensureRootContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it != context_map.end()) {
     return it->second->asRoot();
   }
-  const char* root_id_ptr = nullptr;
+  const char *root_id_ptr = nullptr;
   size_t root_id_size = 0;
   CHECK_RESULT(proxy_get_property("plugin_root_id", sizeof("plugin_root_id") - 1, &root_id_ptr,
                                   &root_id_size));
@@ -69,13 +69,13 @@ static RootContext* ensureRootContext(uint32_t context_id) {
   auto root_id_string = root_id->toString();
   if (!root_factories) {
     auto context = std::make_unique<RootContext>(context_id, root_id->view());
-    RootContext* root_context = context->asRoot();
+    RootContext *root_context = context->asRoot();
     context_map[context_id] = std::move(context);
     root_context_map[root_id_string] = root_context;
     return root_context;
   }
   auto factory = root_factories->find(root_id_string);
-  RootContext* root_context;
+  RootContext *root_context;
   if (factory != root_factories->end()) {
     auto context = factory->second(context_id, root_id->view());
     root_context = context->asRoot();
@@ -90,7 +90,7 @@ static RootContext* ensureRootContext(uint32_t context_id) {
   return root_context;
 }
 
-static ContextBase* getContextBase(uint32_t context_id) {
+static ContextBase *getContextBase(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end()) {
     return nullptr;
@@ -98,7 +98,7 @@ static ContextBase* getContextBase(uint32_t context_id) {
   return it->second.get();
 }
 
-Context* getContext(uint32_t context_id) {
+Context *getContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !it->second->asContext()) {
     return nullptr;
@@ -106,7 +106,7 @@ Context* getContext(uint32_t context_id) {
   return it->second->asContext();
 }
 
-static RootContext* getRootContext(uint32_t context_id) {
+static RootContext *getRootContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !it->second->asRoot()) {
     return nullptr;
@@ -114,7 +114,7 @@ static RootContext* getRootContext(uint32_t context_id) {
   return it->second->asRoot();
 }
 
-RootContext* getRoot(StringView root_id) {
+RootContext *getRoot(StringView root_id) {
   auto it = root_context_map.find(std::string(root_id));
   if (it != root_context_map.end()) {
     return it->second;
