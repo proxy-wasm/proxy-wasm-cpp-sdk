@@ -16,14 +16,14 @@
  */
 
 // Create an expression using a foreign function call.
-inline WasmResult createExpression(StringView expr, uint32_t* token) {
+inline WasmResult createExpression(StringView expr, uint32_t *token) {
   std::string function = "expr_create";
-  char* out = nullptr;
+  char *out = nullptr;
   size_t out_size = 0;
   auto result = proxy_call_foreign_function(function.data(), function.size(), expr.data(),
                                             expr.size(), &out, &out_size);
   if (result == WasmResult::Ok && out_size == sizeof(uint32_t)) {
-    *token = *reinterpret_cast<uint32_t*>(out);
+    *token = *reinterpret_cast<uint32_t *>(out);
   }
   ::free(out);
   return result;
@@ -32,11 +32,11 @@ inline WasmResult createExpression(StringView expr, uint32_t* token) {
 // Evaluate an expression using an expression token.
 inline Optional<WasmDataPtr> exprEvaluate(uint32_t token) {
   std::string function = "expr_evaluate";
-  char* out = nullptr;
+  char *out = nullptr;
   size_t out_size = 0;
   auto result = proxy_call_foreign_function(function.data(), function.size(),
-                                            reinterpret_cast<const char*>(&token), sizeof(uint32_t),
-                                            &out, &out_size);
+                                            reinterpret_cast<const char *>(&token),
+                                            sizeof(uint32_t), &out, &out_size);
   if (result != WasmResult::Ok) {
     return {};
   }
@@ -46,25 +46,25 @@ inline Optional<WasmDataPtr> exprEvaluate(uint32_t token) {
 // Delete an expression using an expression token.
 inline WasmResult exprDelete(uint32_t token) {
   std::string function = "expr_delete";
-  char* out = nullptr;
+  char *out = nullptr;
   size_t out_size = 0;
   auto result = proxy_call_foreign_function(function.data(), function.size(),
-                                            reinterpret_cast<const char*>(&token), sizeof(uint32_t),
-                                            &out, &out_size);
+                                            reinterpret_cast<const char *>(&token),
+                                            sizeof(uint32_t), &out, &out_size);
   ::free(out);
   return result;
 }
 
-template <typename T> inline bool evaluateExpression(uint32_t token, T* out) {
+template <typename T> inline bool evaluateExpression(uint32_t token, T *out) {
   auto buf = exprEvaluate(token);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
   }
-  *out = *reinterpret_cast<const T*>(buf.value()->data());
+  *out = *reinterpret_cast<const T *>(buf.value()->data());
   return true;
 }
 
-template <> inline bool evaluateExpression<std::string>(uint32_t token, std::string* out) {
+template <> inline bool evaluateExpression<std::string>(uint32_t token, std::string *out) {
   auto buf = exprEvaluate(token);
   if (!buf.has_value()) {
     return false;
@@ -74,7 +74,7 @@ template <> inline bool evaluateExpression<std::string>(uint32_t token, std::str
 }
 
 // Specialization for message types (including struct value for lists and maps)
-template <typename T> inline bool evaluateMessage(uint32_t token, T* value_ptr) {
+template <typename T> inline bool evaluateMessage(uint32_t token, T *value_ptr) {
   auto buf = exprEvaluate(token);
   if (!buf.has_value()) {
     return false;
