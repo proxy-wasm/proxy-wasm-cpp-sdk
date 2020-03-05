@@ -1,7 +1,7 @@
 ---
-Language:        Cpp
-AccessModifierOffset: -2
+Language: Cpp
 ColumnLimit: 100
+AccessModifierOffset: -2
 DerivePointerAlignment: false
 PointerAlignment: Right
 SortIncludes: false
@@ -10,7 +10,7 @@ SortIncludes: false
 ---
 Language: Proto
 ColumnLimit: 100
-SpacesInContainerLiterals: false
 AllowShortFunctionsOnASingleLine: false
 ReflowComments: false
+SpacesInContainerLiterals: false
 ...
