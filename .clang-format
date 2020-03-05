@@ -3,7 +3,7 @@ Language: Cpp
 ColumnLimit: 100
 AccessModifierOffset: -2
 DerivePointerAlignment: false
-PointerAlignment: Left
+PointerAlignment: Right
 SortIncludes: false
 ...
 
