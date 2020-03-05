@@ -556,7 +556,6 @@ inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_
                                    response_code_details.size(), body.data(), body.size(), ptr,
                                    size, static_cast<uint32_t>(grpc_status));
 }
-inline void clearRouteCache() { proxy_clear_route_cache(); }
 
 // SharedData
 inline WasmResult getSharedData(StringView key, WasmDataPtr *value, uint32_t *cas = nullptr) {
