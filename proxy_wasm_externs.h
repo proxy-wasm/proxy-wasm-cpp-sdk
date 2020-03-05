@@ -90,21 +90,22 @@ extern "C" WasmResult proxy_enqueue_shared_queue(uint32_t token, const char *dat
                                                  size_t data_size);
 
 // Headers/Trailers/Metadata Maps
-extern "C" WasmResult proxy_add_header_map_value(HeaderMapType type, const char *key_ptr,
+extern "C" WasmResult proxy_add_header_map_value(WasmHeaderMapType type, const char *key_ptr,
                                                  size_t key_size, const char *value_ptr,
                                                  size_t value_size);
-extern "C" WasmResult proxy_get_header_map_value(HeaderMapType type, const char *key_ptr,
+extern "C" WasmResult proxy_get_header_map_value(WasmHeaderMapType type, const char *key_ptr,
                                                  size_t key_size, const char **value_ptr,
                                                  size_t *value_size);
-extern "C" WasmResult proxy_get_header_map_pairs(HeaderMapType type, const char **ptr,
+extern "C" WasmResult proxy_get_header_map_pairs(WasmHeaderMapType type, const char **ptr,
                                                  size_t *size);
-extern "C" WasmResult proxy_set_header_map_pairs(HeaderMapType type, const char *ptr, size_t size);
-extern "C" WasmResult proxy_replace_header_map_value(HeaderMapType type, const char *key_ptr,
+extern "C" WasmResult proxy_set_header_map_pairs(WasmHeaderMapType type, const char *ptr,
+                                                 size_t size);
+extern "C" WasmResult proxy_replace_header_map_value(WasmHeaderMapType type, const char *key_ptr,
                                                      size_t key_size, const char *value_ptr,
                                                      size_t value_size);
-extern "C" WasmResult proxy_remove_header_map_value(HeaderMapType type, const char *key_ptr,
+extern "C" WasmResult proxy_remove_header_map_value(WasmHeaderMapType type, const char *key_ptr,
                                                     size_t key_size);
-extern "C" WasmResult proxy_get_header_map_size(HeaderMapType type, size_t *size);
+extern "C" WasmResult proxy_get_header_map_size(WasmHeaderMapType type, size_t *size);
 
 // Buffer
 extern "C" WasmResult proxy_get_buffer_bytes(WasmBufferType type, uint32_t start, uint32_t length,
