@@ -461,6 +461,13 @@ struct RegisterContextFactory {
       : RegisterContextFactory(context_factory, nullptr, root_id) {}
 };
 
+inline WasmDataPtr getConfiguration() {
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  CHECK_RESULT(proxy_get_configuration(&value_ptr, &value_size));
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
 inline std::pair<uint32_t, WasmDataPtr> getStatus() {
   uint32_t code = 0;
   const char *value_ptr = nullptr;
