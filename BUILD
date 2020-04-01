@@ -22,7 +22,6 @@ cc_library(
         "proxy_wasm_intrinsics_lite.pb.cc",
         "struct_lite.pb.cc",
     ],
-    copts = [ "-DPROXY_WASM_PROTOBUF_LITE=1" ],
     hdrs = [
         "proxy_wasm_api.h",
         "proxy_wasm_common.h",
@@ -32,6 +31,7 @@ cc_library(
         "proxy_wasm_intrinsics_lite.pb.h",
         "struct_lite.pb.h",
     ],
+    copts = ["-DPROXY_WASM_PROTOBUF_LITE=1"],
     visibility = ["//visibility:public"],
     deps = [
         "@com_google_protobuf//:protobuf_lite",
