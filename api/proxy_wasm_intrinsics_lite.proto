@@ -16,7 +16,7 @@
 syntax = 'proto3';
 option optimize_for = LITE_RUNTIME;
 
-import "struct_lite.proto";
+import "api/struct_lite.proto";
 
 message WKT {
   google.protobuf.Struct struct = 1;
