@@ -46,8 +46,8 @@ proto_library(
     deps = [
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
-        "@com_google_protobuf//:struct_proto",
         "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:struct_proto",
     ],
 )
 
@@ -64,8 +64,8 @@ cc_library(
         "proxy_wasm_externs.h",
         "proxy_wasm_intrinsics.h",
     ],
+    copts = ["-DPROXY_WASM_PROTOBUF_LITE"],
     visibility = ["//visibility:public"],
-    copts =  ["-DPROXY_WASM_PROTOBUF_LITE"],
     deps = [
         ":proxy_wasm_intrinsics_lite_cc_proto",
         "@com_google_protobuf//:protobuf",
@@ -80,14 +80,14 @@ cc_proto_library(
 proto_library(
     name = "proxy_wasm_intrinsics_lite_proto",
     srcs = [
-        "proxy_wasm_intrinsics_lite.proto", 
+        "proxy_wasm_intrinsics_lite.proto",
         "struct_lite.proto",
     ],
     deps = [
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
-        "@com_google_protobuf//:struct_proto",
         "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:struct_proto",
     ],
 )
 
