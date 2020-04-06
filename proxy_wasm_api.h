@@ -750,7 +750,7 @@ inline WasmResult setBuffer(WasmBufferType type, size_t start, size_t length, St
                             size_t *new_size = nullptr) {
   auto result = proxy_set_buffer_bytes(type, start, length, data.data(), data.size());
   if (result == WasmResult::Ok && new_size)
-    *new_size += -length + data.size();
+    *new_size = *new_size - length + data.size();
   return result;
 }
 
