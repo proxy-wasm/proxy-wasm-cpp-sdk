@@ -112,7 +112,7 @@ extern "C" WasmResult proxy_get_buffer_bytes(WasmBufferType type, uint32_t start
                                              const char **ptr, size_t *size);
 extern "C" WasmResult proxy_get_buffer_status(WasmBufferType type, size_t *length_ptr,
                                               uint32_t *flags_ptr);
-extern "C" WasmResult proxy_set_buffer_bytes(BufferType type, uint32_t start, uint32_t length,
+extern "C" WasmResult proxy_set_buffer_bytes(WasmBufferType type, uint32_t start, uint32_t length,
                                              const char *ptr, size_t size);
 
 // HTTP
