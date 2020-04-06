@@ -19,6 +19,7 @@
  * Intrinsic high-level support functions available to WASM modules.
  */
 // NOLINT(namespace-envoy)
+#include <functional>
 #include <string>
 #include <tuple>
 #include <unordered_map>
