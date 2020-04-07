@@ -19,6 +19,7 @@
  * Intrinsic high-level support functions available to WASM modules.
  */
 // NOLINT(namespace-envoy)
+#include <functional>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -744,6 +745,14 @@ inline WasmDataPtr getBufferBytes(WasmBufferType type, size_t start, size_t leng
 
 inline WasmResult getBufferStatus(WasmBufferType type, size_t *size, uint32_t *flags) {
   return proxy_get_buffer_status(type, size, flags);
+}
+
+inline WasmResult setBuffer(WasmBufferType type, size_t start, size_t length, StringView data,
+                            size_t *new_size = nullptr) {
+  auto result = proxy_set_buffer_bytes(type, start, length, data.data(), data.size());
+  if (result == WasmResult::Ok && new_size)
+    *new_size = *new_size - length + data.size();
+  return result;
 }
 
 // HTTP
