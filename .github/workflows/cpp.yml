@@ -70,7 +70,7 @@ jobs:
     - name: Re-generate and verify protobuf artifacts
       run: |
         rm *.pb.{cc,h}
-        make
+        make protobuf
         git diff --exit-code -G "(^[^ /])|(^\s+[^\*])" *.pb.{cc,h}
 
   build:
