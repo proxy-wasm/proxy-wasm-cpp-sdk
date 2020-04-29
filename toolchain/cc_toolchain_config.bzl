@@ -89,6 +89,63 @@ def _impl(ctx):
         ],
     )
 
+    cxx17_feature = feature(
+        name = "c++17",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cpp_compile],
+                flag_groups = [flag_group(flags = ["-std=c++17"])],
+            ),
+        ],
+    )
+
+    no_canonical_prefixes_feature = feature(
+        name = "no-canonical-prefixes",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.c_compile,
+                    ACTION_NAMES.cpp_compile,
+                    ACTION_NAMES.cpp_link_executable,
+                    ACTION_NAMES.cpp_link_dynamic_library,
+                    ACTION_NAMES.cpp_link_nodeps_dynamic_library,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-no-canonical-prefixes",
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    opt_feature = feature(
+        name = "opt",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.c_compile, ACTION_NAMES.cpp_compile],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-O3", "-ffunction-sections", "-fdata-sections"],
+                    ),
+                ],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_dynamic_library,
+                    ACTION_NAMES.cpp_link_nodeps_dynamic_library,
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [flag_group(flags = ["-Wl,--gc-sections"])],
+            ),
+        ],
+    )
+
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         toolchain_identifier = "wasm-toolchain",
@@ -107,7 +164,7 @@ def _impl(ctx):
             "external/emscripten_toolchain/upstream/emscripten/system/include/libcxx",
             "external/emscripten_toolchain/upstream/emscripten/system/include/libc",
         ],
-        # features = [toolchain_include_directories_feature],
+        features = [cxx17_feature, no_canonical_prefixes_feature, opt_feature],
     )
 
 cc_toolchain_config = rule(
