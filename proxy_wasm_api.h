@@ -335,7 +335,7 @@ public:
                       uint32_t timeout_milliseconds, HttpCallCallback callback);
   // NB: the message is the response if status == OK and an error message
   // otherwise. Returns false on setup error.
-#if PROXY_WASM_PROTOBUF
+#ifdef PROXY_WASM_PROTOBUF
   WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
                             const HeaderStringPairs &initial_metadata,
                             const google::protobuf::MessageLite &request,
@@ -1377,7 +1377,7 @@ inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status) {
   }
 }
 
-#if PROXY_WASM_PROTOBUF
+#ifdef PROXY_WASM_PROTOBUF
 inline WasmResult RootContext::grpcCallHandler(StringView service, StringView service_name,
                                                StringView method_name,
                                                const HeaderStringPairs &initial_metadata,
