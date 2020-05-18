@@ -335,6 +335,7 @@ public:
                       uint32_t timeout_milliseconds, HttpCallCallback callback);
   // NB: the message is the response if status == OK and an error message
   // otherwise. Returns false on setup error.
+#ifdef PROXY_WASM_PROTOBUF
   WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
                             const HeaderStringPairs &initial_metadata,
                             const google::protobuf::MessageLite &request,
@@ -361,6 +362,7 @@ public:
                              const google::protobuf::MessageLite &request,
                              uint32_t timeout_milliseconds,
                              std::unique_ptr<GrpcCallHandlerBase> handler);
+#endif
   // Returns false on setup error.
   WasmResult grpcStreamHandler(StringView service, StringView service_name, StringView method_name,
                                const HeaderStringPairs &initial_metadata,
@@ -1183,6 +1185,7 @@ inline Histogram<Tags...> *Histogram<Tags...>::New(StringView name,
                                 std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
+#ifdef PROXY_WASM_PROTOBUF
 inline WasmResult grpcCall(StringView service, StringView service_name, StringView method_name,
                            const HeaderStringPairs &initial_metadata,
                            const google::protobuf::MessageLite &request,
@@ -1197,6 +1200,7 @@ inline WasmResult grpcCall(StringView service, StringView service_name, StringVi
                          serialized_request.data(), serialized_request.size(), timeout_milliseconds,
                          token_ptr);
 }
+#endif
 
 inline WasmResult grpcStream(StringView service, StringView service_name, StringView method_name,
                              const HeaderStringPairs &initial_metadata, uint32_t *token_ptr) {
@@ -1238,6 +1242,7 @@ inline void RootContext::onHttpCallResponse(uint32_t token, uint32_t headers, si
   }
 }
 
+#ifdef PROXY_WASM_PROTOBUF
 inline WasmResult RootContext::grpcSimpleCall(StringView service, StringView service_name,
                                               StringView method_name,
                                               const HeaderStringPairs &initial_metadata,
@@ -1252,6 +1257,7 @@ inline WasmResult RootContext::grpcSimpleCall(StringView service, StringView ser
   }
   return result;
 }
+#endif
 
 inline void GrpcCallHandlerBase::cancel() {
   grpcCancel(token_);
@@ -1371,6 +1377,7 @@ inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status) {
   }
 }
 
+#ifdef PROXY_WASM_PROTOBUF
 inline WasmResult RootContext::grpcCallHandler(StringView service, StringView service_name,
                                                StringView method_name,
                                                const HeaderStringPairs &initial_metadata,
@@ -1387,6 +1394,7 @@ inline WasmResult RootContext::grpcCallHandler(StringView service, StringView se
   }
   return result;
 }
+#endif
 
 inline WasmResult RootContext::grpcStreamHandler(StringView service, StringView service_name,
                                                  StringView method_name,

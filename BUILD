@@ -15,7 +15,6 @@ cc_library(
     ],
 )
 
-# Targets for building base library
 cc_library(
     name = "proxy_wasm_intrinsics",
     srcs = [
@@ -29,10 +28,6 @@ cc_library(
         "proxy_wasm_intrinsics.h",
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        ":proxy_wasm_intrinsics_cc_proto",
-        "@com_google_protobuf//:protobuf",
-    ],
 )
 
 cc_proto_library(
@@ -51,23 +46,28 @@ proto_library(
     ],
 )
 
-# Targets for build lite library
+# include lite protobuf support
 cc_library(
     name = "proxy_wasm_intrinsics_lite",
-    srcs = [
-        "proxy_wasm_intrinsics.cc",
-    ],
-    hdrs = [
-        "proxy_wasm_api.h",
-        "proxy_wasm_common.h",
-        "proxy_wasm_enums.h",
-        "proxy_wasm_externs.h",
-        "proxy_wasm_intrinsics.h",
-    ],
-    copts = ["-DPROXY_WASM_PROTOBUF_LITE"],
+    hdrs = ["proxy_wasm_intrinsics_lite.h"],
+    copts = ["-DPROXY_WASM_PROTOBUF_LITE=1"],
     visibility = ["//visibility:public"],
     deps = [
+        ":proxy_wasm_intrinsics",
         ":proxy_wasm_intrinsics_lite_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+# include full protobuf support
+cc_library(
+    name = "proxy_wasm_intrinsics_full",
+    hdrs = ["proxy_wasm_intrinsics_full.h"],
+    copts = ["-DPROXY_WASM_PROTOBUF_FULL=1"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":proxy_wasm_intrinsics",
+        ":proxy_wasm_intrinsics_cc_proto",
         "@com_google_protobuf//:protobuf",
     ],
 )

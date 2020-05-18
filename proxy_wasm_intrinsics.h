@@ -40,9 +40,12 @@ template <typename T> using Optional = std::optional<T>;
 #include "proxy_wasm_common.h"
 #include "proxy_wasm_enums.h"
 #include "proxy_wasm_externs.h"
-#ifndef PROXY_WASM_PROTOBUF_LITE
+#ifdef PROXY_WASM_PROTOBUF_FULL
+#define PROXY_WASM_PROTOBUF 1
 #include "proxy_wasm_intrinsics.pb.h"
-#else
+#endif
+#ifdef PROXY_WASM_PROTOBUF_LITE
+#define PROXY_WASM_PROTOBUF 1
 #include "proxy_wasm_intrinsics_lite.pb.h"
 #endif
 #include "proxy_wasm_api.h"
