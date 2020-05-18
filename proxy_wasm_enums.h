@@ -24,7 +24,13 @@
 
 enum class LogLevel : int32_t { trace, debug, info, warn, error, critical, Max = critical };
 enum class FilterStatus : int32_t { Continue = 0, StopIteration = 1 };
-enum class FilterHeadersStatus : int32_t { Continue = 0, StopIteration = 1 };
+enum class FilterHeadersStatus : int32_t {
+  Continue = 0,
+  StopIteration = 1,
+  ContinueAndEndStream = 2,
+  StopAllIterationAndBuffer = 3,
+  StopAllIterationAndWatermark = 4,
+};
 enum class FilterMetadataStatus : int32_t { Continue = 0 };
 enum class FilterTrailersStatus : int32_t { Continue = 0, StopIteration = 1 };
 enum class FilterDataStatus : int32_t {
