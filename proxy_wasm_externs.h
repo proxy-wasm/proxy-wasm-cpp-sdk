@@ -164,11 +164,15 @@ extern "C" void proxy_on_queue_ready(uint32_t root_context_id, uint32_t token);
 // Stream calls.
 extern "C" void proxy_on_context_create(uint32_t context_id, uint32_t parent_context_id);
 extern "C" FilterHeadersStatus proxy_on_request_headers(uint32_t context_id, uint32_t headers);
+extern "C" FilterHeadersStatus proxy_on_request_headers_ext(uint32_t context_id, uint32_t headers,
+                                                            uint32_t end_of_stream);
 extern "C" FilterDataStatus proxy_on_request_body(uint32_t context_id, uint32_t body_buffer_length,
                                                   uint32_t end_of_stream);
 extern "C" FilterTrailersStatus proxy_on_request_trailers(uint32_t context_id, uint32_t trailers);
 extern "C" FilterMetadataStatus proxy_on_request_metadata(uint32_t context_id, uint32_t nelements);
 extern "C" FilterHeadersStatus proxy_on_response_headers(uint32_t context_id, uint32_t headers);
+extern "C" FilterHeadersStatus proxy_on_response_headers_ext(uint32_t context_id, uint32_t headers,
+                                                             uint32_t end_of_stream);
 extern "C" FilterDataStatus proxy_on_response_body(uint32_t context_id, uint32_t body_buffer_length,
                                                    uint32_t end_of_stream);
 extern "C" FilterTrailersStatus proxy_on_response_trailers(uint32_t context_id, uint32_t trailers);
