@@ -19,6 +19,8 @@
  * Intrinsic high-level support functions available to WASM modules.
  */
 // NOLINT(namespace-envoy)
+#pragma once
+
 #include <functional>
 #include <string>
 #include <tuple>
@@ -283,6 +285,8 @@ public:
   // Called to indicate that no more calls will come and this context is being
   // deleted.
   virtual void onDelete() {} // Called when the stream or VM is being deleted.
+  // Called when a foreign function event arrives.
+  virtual void onForeignFunction(uint32_t /* foreign_function_id */, uint32_t /* data_size */) {}
 
   using HttpCallCallback =
       std::function<void(uint32_t, size_t, uint32_t)>; // headers, body_size, trailers

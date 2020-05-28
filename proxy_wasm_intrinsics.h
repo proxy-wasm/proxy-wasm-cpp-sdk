@@ -19,7 +19,6 @@
  * API Available to WASM modules.
  */
 // NOLINT(namespace-envoy)
-
 #pragma once
 
 #ifndef PROXY_WASM_KEEPALIVE
@@ -38,7 +37,6 @@ template <typename T> using Optional = std::optional<T>;
 
 #include "proxy_wasm_enums.h"
 #include "proxy_wasm_common.h"
-#include "proxy_wasm_enums.h"
 #include "proxy_wasm_externs.h"
 #ifdef PROXY_WASM_PROTOBUF_FULL
 #define PROXY_WASM_PROTOBUF 1

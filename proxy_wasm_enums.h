@@ -19,7 +19,6 @@
  * Intrinsic enumerations available to WASM modules.
  */
 // NOLINT(namespace-envoy)
-
 #pragma once
 
 enum class LogLevel : int32_t { trace, debug, info, warn, error, critical, Max = critical };

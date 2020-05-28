@@ -19,7 +19,7 @@
  * API Available to WASM modules.
  */
 // NOLINT(namespace-envoy)
-
 #pragma once
+
 #define PROXY_WASM_PROTOBUF_FULL 1
 #include "proxy_wasm_intrinsics.h"
