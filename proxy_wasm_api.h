@@ -310,7 +310,7 @@ public:
   // Called once when the VM loads and once when each hook loads and whenever
   // configuration changes. Returns false if the configuration is invalid.
   virtual bool onConfigure(size_t /* configuration_size */) { return true; }
-  // Called when each hook loads.  Returns false if the configuration is
+  // Called when each hook loads. Returns false if the configuration is
   // invalid.
   virtual bool onStart(size_t /* vm_configuration_size */) { return true; }
   // Called when the timer goes off.
@@ -329,7 +329,7 @@ public:
   virtual void onGrpcReceive(uint32_t token, size_t body_size);
   virtual void onGrpcClose(uint32_t token, GrpcStatus status);
 
-  // Default high level HTTP/gRPC interface.  NB: overriding the low level
+  // Default high level HTTP/gRPC interface. NB: overriding the low level
   // interface will disable this interface. Returns false on setup error.
   WasmResult httpCall(StringView uri, const HeaderStringPairs &request_headers,
                       StringView request_body, const HeaderStringPairs &request_trailers,
@@ -417,7 +417,7 @@ private:
 
 RootContext *getRoot(StringView root_id);
 
-// Context for a stream.  The distinguished context id == 0 is used for
+// Context for a stream. The distinguished context id == 0 is used for
 // non-stream calls.
 class Context : public ContextBase {
 public:
@@ -435,7 +435,9 @@ public:
   virtual void onDownstreamConnectionClose(PeerType) {}
   virtual void onUpstreamConnectionClose(PeerType) {}
 
-  virtual FilterHeadersStatus onRequestHeaders(uint32_t) { return FilterHeadersStatus::Continue; }
+  virtual FilterHeadersStatus onRequestHeaders(uint32_t, bool) {
+    return FilterHeadersStatus::Continue;
+  }
   virtual FilterMetadataStatus onRequestMetadata(uint32_t) {
     return FilterMetadataStatus::Continue;
   }
@@ -446,7 +448,9 @@ public:
   virtual FilterTrailersStatus onRequestTrailers(uint32_t) {
     return FilterTrailersStatus::Continue;
   }
-  virtual FilterHeadersStatus onResponseHeaders(uint32_t) { return FilterHeadersStatus::Continue; }
+  virtual FilterHeadersStatus onResponseHeaders(uint32_t, bool) {
+    return FilterHeadersStatus::Continue;
+  }
   virtual FilterMetadataStatus onResponseMetadata(uint32_t) {
     return FilterMetadataStatus::Continue;
   }
