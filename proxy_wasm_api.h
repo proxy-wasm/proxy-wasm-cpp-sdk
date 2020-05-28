@@ -477,6 +477,8 @@ private:
 // Returns nullptr if the Context no longer exists (i.e. the stream has been
 // destroyed).
 Context *getContext(uint32_t context_id);
+RootContext *getRootContext(uint32_t context_id);
+ContextBase *getContextBase(uint32_t context_id);
 
 using RootFactory = std::function<std::unique_ptr<RootContext>(uint32_t id, StringView root_id)>;
 using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext *root)>;

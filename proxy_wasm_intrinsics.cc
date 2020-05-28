@@ -90,7 +90,7 @@ static RootContext *ensureRootContext(uint32_t context_id) {
   return root_context;
 }
 
-static ContextBase *getContextBase(uint32_t context_id) {
+ContextBase *getContextBase(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end()) {
     return nullptr;
@@ -106,7 +106,7 @@ Context *getContext(uint32_t context_id) {
   return it->second->asContext();
 }
 
-static RootContext *getRootContext(uint32_t context_id) {
+RootContext *getRootContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !it->second->asRoot()) {
     return nullptr;
