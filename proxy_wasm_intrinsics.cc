@@ -178,9 +178,9 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_upstream_connection_close(uint32_t
   return getContext(context_id)->onUpstreamConnectionClose(static_cast<PeerType>(peer_type));
 }
 
-extern "C" PROXY_WASM_KEEPALIVE FilterHeadersStatus proxy_on_request_headers(uint32_t context_id,
-                                                                             uint32_t headers) {
-  return getContext(context_id)->onRequestHeaders(headers);
+extern "C" PROXY_WASM_KEEPALIVE FilterHeadersStatus
+proxy_on_request_headers(uint32_t context_id, uint32_t headers, uint32_t end_of_stream) {
+  return getContext(context_id)->onRequestHeaders(headers, end_of_stream != 0);
 }
 
 extern "C" PROXY_WASM_KEEPALIVE FilterMetadataStatus proxy_on_request_metadata(uint32_t context_id,
@@ -200,9 +200,9 @@ extern "C" PROXY_WASM_KEEPALIVE FilterTrailersStatus proxy_on_request_trailers(u
   return getContext(context_id)->onRequestTrailers(trailers);
 }
 
-extern "C" PROXY_WASM_KEEPALIVE FilterHeadersStatus proxy_on_response_headers(uint32_t context_id,
-                                                                              uint32_t headers) {
-  return getContext(context_id)->onResponseHeaders(headers);
+extern "C" PROXY_WASM_KEEPALIVE FilterHeadersStatus
+proxy_on_response_headers(uint32_t context_id, uint32_t headers, uint32_t end_of_stream) {
+  return getContext(context_id)->onResponseHeaders(headers, end_of_stream != 0);
 }
 
 extern "C" PROXY_WASM_KEEPALIVE FilterMetadataStatus proxy_on_response_metadata(uint32_t context_id,
