@@ -146,7 +146,7 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_context_create(uint32_t context_id
   if (parent_context_id) {
     ensureContext(context_id, parent_context_id)->onCreate();
   } else {
-    ensureRootContext(context_id);
+    ensureRootContext(context_id)->onCreate();
   }
 }
 
