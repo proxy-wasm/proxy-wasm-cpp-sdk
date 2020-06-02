@@ -1,3 +1,5 @@
+CPP_API ?= .
+
 all: proxy_wasm_intrinsics.pb.h proxy_wasm_intrinsics_lite.pb.h struct_lite.pb.h ${CPP_API}/libprotobuf.a ${CPP_API}/libprotobuf-lite.a
 
 protobuf: proxy_wasm_intrinsics.pb.h proxy_wasm_intrinsics_lite.pb.h struct_lite.pb.h
