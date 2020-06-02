@@ -19,7 +19,6 @@
  * Proxy-WASM ABI.
  */
 // NOLINT(namespace-envoy)
-
 #pragma once
 
 #include <stddef.h>
@@ -39,7 +38,7 @@ extern "C" WasmResult proxy_get_status(uint32_t *status_code_ptr, const char **m
 // Logging
 extern "C" WasmResult proxy_log(LogLevel level, const char *logMessage, size_t messageSize);
 
-// Timer (must be called from a root context, e.g. onStart, onTick).
+// Timer (will be set for the root context, e.g. onStart, onTick).
 extern "C" WasmResult proxy_set_tick_period_milliseconds(uint32_t millisecond);
 
 // Time
@@ -159,6 +158,8 @@ extern "C" uint32_t proxy_validate_configuration(uint32_t root_context_id,
                                                  uint32_t configuration_size);
 extern "C" uint32_t proxy_on_configure(uint32_t root_context_id, uint32_t configuration_size);
 extern "C" void proxy_on_tick(uint32_t root_context_id);
+extern "C" void proxy_on_foreign_function(uint32_t root_context_id, uint32_t function_id,
+                                          uint32_t data_size);
 extern "C" void proxy_on_queue_ready(uint32_t root_context_id, uint32_t token);
 
 // Stream calls.

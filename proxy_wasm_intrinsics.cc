@@ -90,7 +90,7 @@ static RootContext *ensureRootContext(uint32_t context_id) {
   return root_context;
 }
 
-static ContextBase *getContextBase(uint32_t context_id) {
+ContextBase *getContextBase(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end()) {
     return nullptr;
@@ -106,7 +106,7 @@ Context *getContext(uint32_t context_id) {
   return it->second->asContext();
 }
 
-static RootContext *getRootContext(uint32_t context_id) {
+RootContext *getRootContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !it->second->asRoot()) {
     return nullptr;
@@ -265,4 +265,9 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_grpc_close(uint32_t context_id, ui
 
 extern "C" PROXY_WASM_KEEPALIVE void proxy_on_queue_ready(uint32_t context_id, uint32_t token) {
   getRootContext(context_id)->onQueueReady(token);
+}
+
+extern "C" PROXY_WASM_KEEPALIVE void
+proxy_on_foreign_function(uint32_t context_id, uint32_t foreign_function_id, uint32_t data_size) {
+  getContextBase(context_id)->onForeignFunction(foreign_function_id, data_size);
 }

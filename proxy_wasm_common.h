@@ -19,7 +19,6 @@
  * Common enumerations available to WASM modules and shared with sandbox.
  */
 // NOLINT(namespace-envoy)
-
 #pragma once
 
 #include <string>
@@ -95,7 +94,8 @@ enum class WasmBufferType : int32_t {
   GrpcReceiveBuffer = 5,     // Immutable
   VmConfiguration = 6,       // Immutable
   PluginConfiguration = 7,   // Immutable
-  MAX = 7,
+  CallData = 8,              // Immutable
+  MAX = 8,
 };
 enum class WasmBufferFlags : int32_t {
   // These must be powers of 2.
