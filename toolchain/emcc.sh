@@ -31,8 +31,6 @@ args=($args)
 delete=-ftest-coverage
 args="${args[@]/$delete}"
 
-echo 3 "$args"
-
 emcc -s EMIT_EMSCRIPTEN_METADATA=1 -s STANDALONE_WASM=1 -s EXPORTED_FUNCTIONS=['_malloc','_free'] $args
 
 # clang doesn't support `-no-canonical-system-headers` so sed it
