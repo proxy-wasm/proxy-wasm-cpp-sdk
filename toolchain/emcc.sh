@@ -18,25 +18,12 @@ set -euo pipefail
 
 . $(dirname $0)/common.sh
 
-# Remove coverage flags which are not supported.
-args=($@)
-delete=--coverage
-args="${args[@]/$delete}"
-
-args=($args)
-delete=-fprofile-arcs
-args="${args[@]/$delete}"
-
-args=($args)
-delete=-ftest-coverage
-args="${args[@]/$delete}"
-
-emcc -s EMIT_EMSCRIPTEN_METADATA=1 -s STANDALONE_WASM=1 -s EXPORTED_FUNCTIONS=['_malloc','_free'] $args
+emcc -s EMIT_EMSCRIPTEN_METADATA=1 -s STANDALONE_WASM=1 -s EXPORTED_FUNCTIONS=['_malloc','_free'] "$@"
 
 # clang doesn't support `-no-canonical-system-headers` so sed it
 # find the .d file in the args and fix it:
 
-for arg in $args
+for arg in "$@"
 do
     if [ ${arg: -2} == ".d" ]; then
         echo Fixing $arg
