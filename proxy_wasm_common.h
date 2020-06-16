@@ -101,3 +101,10 @@ enum class WasmBufferFlags : int32_t {
   // These must be powers of 2.
   EndOfStream = 1,
 };
+enum class WasmStreamType : int32_t {
+  Request = 0,
+  Response = 1,
+  Downstream = 2,
+  Upstream = 3,
+  MAX = 3,
+};

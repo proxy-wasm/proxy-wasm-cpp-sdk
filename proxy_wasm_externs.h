@@ -50,9 +50,9 @@ extern "C" WasmResult proxy_get_property(const char *path_ptr, size_t path_size,
 extern "C" WasmResult proxy_set_property(const char *path_ptr, size_t path_size,
                                          const char *value_ptr, size_t value_size);
 
-// Continue/Reply/Route
-extern "C" WasmResult proxy_continue_request();
-extern "C" WasmResult proxy_continue_response();
+// Continue/Close/Reply/Route
+extern "C" WasmResult proxy_continue_stream(WasmStreamType stream_type);
+extern "C" WasmResult proxy_close_stream(WasmStreamType stream_type);
 extern "C" WasmResult
 proxy_send_local_response(uint32_t response_code, const char *response_code_details_ptr,
                           size_t response_code_details_size, const char *body_ptr, size_t body_size,

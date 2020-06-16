@@ -169,13 +169,13 @@ extern "C" PROXY_WASM_KEEPALIVE FilterStatus proxy_on_upstream_data(uint32_t con
 }
 
 extern "C" PROXY_WASM_KEEPALIVE void proxy_on_downstream_connection_close(uint32_t context_id,
-                                                                          uint32_t peer_type) {
-  return getContext(context_id)->onDownstreamConnectionClose(static_cast<PeerType>(peer_type));
+                                                                          uint32_t close_type) {
+  return getContext(context_id)->onDownstreamConnectionClose(static_cast<CloseType>(close_type));
 }
 
 extern "C" PROXY_WASM_KEEPALIVE void proxy_on_upstream_connection_close(uint32_t context_id,
-                                                                        uint32_t peer_type) {
-  return getContext(context_id)->onUpstreamConnectionClose(static_cast<PeerType>(peer_type));
+                                                                        uint32_t close_type) {
+  return getContext(context_id)->onUpstreamConnectionClose(static_cast<CloseType>(close_type));
 }
 
 extern "C" PROXY_WASM_KEEPALIVE FilterHeadersStatus

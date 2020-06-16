@@ -65,8 +65,8 @@ enum class MetricType : int32_t {
   Histogram = 2,
   Max = 2,
 };
-enum class PeerType : int32_t {
+enum class CloseType : int32_t {
   Unknown = 0,
-  Local = 1,
-  Remote = 2,
+  Local = 1,  // Close initiated by the proxy.
+  Remote = 2, // Close initiated by the peer.
 };
