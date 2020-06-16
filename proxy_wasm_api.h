@@ -595,7 +595,7 @@ inline WasmResult continueRequest() { return proxy_continue_stream(WasmStreamTyp
 inline WasmResult continueResponse() { return proxy_continue_stream(WasmStreamType::Response); }
 
 inline WasmResult closeRequest() { return proxy_close_stream(WasmStreamType::Request); }
-inline WasmResult closeResponse() { return proxy_continue_stream(WasmStreamType::Response); }
+inline WasmResult closeResponse() { return proxy_close_stream(WasmStreamType::Response); }
 
 inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_code_details,
                                     StringView body,
