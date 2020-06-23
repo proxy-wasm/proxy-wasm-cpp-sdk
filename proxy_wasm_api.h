@@ -436,8 +436,8 @@ public:
   virtual FilterStatus onNewConnection() { return FilterStatus::Continue; }
   virtual FilterStatus onDownstreamData(size_t, bool) { return FilterStatus::Continue; }
   virtual FilterStatus onUpstreamData(size_t, bool) { return FilterStatus::Continue; }
-  virtual void onDownstreamConnectionClose(PeerType) {}
-  virtual void onUpstreamConnectionClose(PeerType) {}
+  virtual void onDownstreamConnectionClose(CloseType) {}
+  virtual void onUpstreamConnectionClose(CloseType) {}
 
   virtual FilterHeadersStatus onRequestHeaders(uint32_t, bool) {
     return FilterHeadersStatus::Continue;
@@ -591,8 +591,12 @@ inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
 }
 
 // Continue/Respond/Route
-inline WasmResult continueRequest() { return proxy_continue_request(); }
-inline WasmResult continueResponse() { return proxy_continue_response(); }
+inline WasmResult continueRequest() { return proxy_continue_stream(WasmStreamType::Request); }
+inline WasmResult continueResponse() { return proxy_continue_stream(WasmStreamType::Response); }
+
+inline WasmResult closeRequest() { return proxy_close_stream(WasmStreamType::Request); }
+inline WasmResult closeResponse() { return proxy_close_stream(WasmStreamType::Response); }
+
 inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_code_details,
                                     StringView body,
                                     const HeaderStringPairs &additional_response_headers,
