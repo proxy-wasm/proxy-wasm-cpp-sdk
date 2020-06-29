@@ -7,7 +7,7 @@ load(":cc_toolchain_config.bzl", "cc_toolchain_config")
 cc_toolchain_suite(
     name = "emscripten",
     toolchains = {
-        "wasm": ":wasm_toolchain",
+        "wasm32": ":wasm_toolchain",
     },
 )
 
