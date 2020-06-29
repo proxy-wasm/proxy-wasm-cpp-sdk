@@ -6,7 +6,7 @@
 build --crosstool_top=//toolchain:emscripten
 
 # Use --cpu as a differentiator.
-build --cpu=wasm
+build --cpu=wasm32
 
 # Use the default Bazel C++ toolchain to build the tools used during the
 # build.
