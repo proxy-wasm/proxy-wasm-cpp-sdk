@@ -9,11 +9,11 @@ http_archive(
     name = "emscripten_toolchain",
     build_file = "//:emscripten-toolchain.BUILD",
     patch_cmds = [
-        "./emsdk install 1.39.0-upstream",
-        "./emsdk activate --embedded 1.39.0-upstream",
-        ],
-    strip_prefix = "emsdk-a5082b232617c762cb65832429f896c838df2483",
-    url = "https://github.com/emscripten-core/emsdk/archive/a5082b232617c762cb65832429f896c838df2483.tar.gz",
+        "./emsdk install 1.39.19-upstream",
+        "./emsdk activate --embedded 1.39.19-upstream",
+    ],
+    strip_prefix = "emsdk-dec8a63594753fe5f4ad3b47850bf64d66c14a4e",
+    url = "https://github.com/emscripten-core/emsdk/archive/dec8a63594753fe5f4ad3b47850bf64d66c14a4e.tar.gz",
 )
 
 # required by com_google_protobuf
@@ -32,8 +32,8 @@ bazel_skylib_workspace()
 
 git_repository(
     name = "com_google_protobuf",
-    remote = "https://github.com/protocolbuffers/protobuf",
     commit = "655310ca192a6e3a050e0ca0b7084a2968072260",
+    remote = "https://github.com/protocolbuffers/protobuf",
 )
 
 http_archive(
