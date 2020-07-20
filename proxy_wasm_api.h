@@ -172,6 +172,7 @@ template <typename Pairs> void exportPairs(const Pairs &pairs, const char **ptr,
   char *buffer = static_cast<char *>(::malloc(size));
   marshalPairs(pairs, buffer);
   *size_ptr = size;
+  *ptr = buffer;
 }
 
 struct PairHash {
@@ -604,9 +605,11 @@ inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_
   const char *ptr = nullptr;
   size_t size = 0;
   exportPairs(additional_response_headers, &ptr, &size);
-  return proxy_send_local_response(response_code, response_code_details.data(),
+  WasmResult result = proxy_send_local_response(response_code, response_code_details.data(),
                                    response_code_details.size(), body.data(), body.size(), ptr,
                                    size, static_cast<uint32_t>(grpc_status));
+  ::free(const_cast<char *>(ptr));
+  return result;
 }
 
 // SharedData
