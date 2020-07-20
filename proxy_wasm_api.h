@@ -606,8 +606,8 @@ inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_
   size_t size = 0;
   exportPairs(additional_response_headers, &ptr, &size);
   WasmResult result = proxy_send_local_response(response_code, response_code_details.data(),
-                                   response_code_details.size(), body.data(), body.size(), ptr,
-                                   size, static_cast<uint32_t>(grpc_status));
+      response_code_details.size(), body.data(), body.size(), ptr,
+      size, static_cast<uint32_t>(grpc_status));
   ::free(const_cast<char *>(ptr));
   return result;
 }
