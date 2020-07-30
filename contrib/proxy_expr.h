@@ -16,7 +16,7 @@
  */
 
 // Create an expression using a foreign function call.
-inline WasmResult createExpression(StringView expr, uint32_t *token) {
+inline WasmResult createExpression(std::string_view expr, uint32_t *token) {
   std::string function = "expr_create";
   char *out = nullptr;
   size_t out_size = 0;
@@ -30,7 +30,7 @@ inline WasmResult createExpression(StringView expr, uint32_t *token) {
 }
 
 // Evaluate an expression using an expression token.
-inline Optional<WasmDataPtr> exprEvaluate(uint32_t token) {
+inline std::optional<WasmDataPtr> exprEvaluate(uint32_t token) {
   std::string function = "expr_evaluate";
   char *out = nullptr;
   size_t out_size = 0;
