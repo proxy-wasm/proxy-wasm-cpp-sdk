@@ -242,9 +242,9 @@ The following methods on context object are supported.
 ### httpCall
 
 ``` {.sourceCode .cpp}
-void httpCall(StringView cluster,
+void httpCall(std::string_view cluster,
               const HeaderStringPairs& request_headers,
-              StringView request_body,
+              std::string_view request_body,
               const HeaderStringPairs& request_trailers,
               uint32_t timeout_milliseconds,
               HttpCallCallback callback)
@@ -270,13 +270,13 @@ called when the HTTP request finishes.
 
 ``` {.sourceCode .cpp}
 template<typename Response>
-void grpcSimpleCall(StringView service,
-                    StringView service_name,
-                    StringView method_name,
+void grpcSimpleCall(std::string_view service,
+                    std::string_view service_name,
+                    std::string_view method_name,
                     const google::protobuf::MessageLite &request,
                     uint32_t timeout_milliseconds,
                     std::function<void(Response&& response)> success_callback,
-                    std::function<void(GrpcStatus status, StringView error_message)> failure_callback)
+                    std::function<void(GrpcStatus status, std::string_view error_message)> failure_callback)
 ```
 
 Makes a unary gRPC call to an upstream host.
@@ -304,9 +304,9 @@ invoked when gRPC call fails. *status* is the returned gRPC status code.
 
 ``` {.sourceCode .cpp}
 void grpcCallHandler(
-    StringView service,
-    StringView service_name,
-    StringView method_name,
+    std::string_view service,
+    std::string_view service_name,
+    std::string_view method_name,
     const google::protobuf::MessageLite &request,
     uint32_t timeout_milliseconds,
     std::unique_ptr<GrpcCallHandlerBase> handler)
@@ -323,9 +323,9 @@ target for callback and fine grained control on the call.
 ### grpcStreamHandler
 
 ``` {.sourceCode .cpp}
-void grpcStreamHandler(StringView service,
-                       StringView service_name,
-                       StringView method_name,
+void grpcStreamHandler(std::string_view service,
+                       std::string_view service_name,
+                       std::string_view method_name,
                        std::unique_ptr<GrpcStreamHandlerBase> handler)
 ```
 
@@ -367,7 +367,7 @@ Header API
 ### addRequestHeader
 
 ``` {.sourceCode .cpp}
-void addRequestHeader(StringView key, StringView value)
+void addRequestHeader(std::string_view key, StringView value)
 ```
 
 Adds a new request header with the key and value if header does not
@@ -378,7 +378,7 @@ only when called in
 ### replaceRequestHeader
 
 ``` {.sourceCode .cpp}
-void replaceRequestHeader(StringView key, StringView value)
+void replaceRequestHeader(std::string_view key, StringView value)
 ```
 
 Replaces the value of an existing request header with the given key, or
@@ -389,7 +389,7 @@ method is effective only when called in
 ### removeRequestHeader
 
 ``` {.sourceCode .cpp}
-void removeRequestHeader(StringView key)
+void removeRequestHeader(std::string_view key)
 ```
 
 Removes request header with the given key. No-op if the request header
@@ -410,7 +410,7 @@ effective only when called in
 ### getRequestHeader
 
 ``` {.sourceCode .cpp}
-WasmDataPtr getRequestHeader(StringView key)
+WasmDataPtr getRequestHeader(std::string_view key)
 ```
 
 Gets value of header with the given key. Returns empty string if header
@@ -437,7 +437,7 @@ contains header pairs data.
 ### addResponseHeader
 
 ``` {.sourceCode .cpp}
-void addResponseHeader(StringView key, StringView value)
+void addResponseHeader(std::string_view key, StringView value)
 ```
 
 Adds a new response header with the key and value if header does not
@@ -448,7 +448,7 @@ only when called in
 ### replaceResponseHeader
 
 ``` {.sourceCode .cpp}
-void replaceResponseHeader(StringView key, StringView value)
+void replaceResponseHeader(std::string_view key, StringView value)
 ```
 
 Replaces the value of an existing response header with the given key, or
@@ -459,7 +459,7 @@ This method is effective only when called in
 ### removeResponseHeader
 
 ``` {.sourceCode .cpp}
-void removeResponseHeader(StringView key)
+void removeResponseHeader(std::string_view key)
 ```
 
 Removes response header with the given key. No-op if the response header
@@ -480,7 +480,7 @@ is effective only when called in
 ### getResponseHeader
 
 ``` {.sourceCode .cpp}
-WasmDataPtr getResponseHeader(StringView key)
+WasmDataPtr getResponseHeader(std::string_view key)
 ```
 
 Gets value of header with the given key. Returns empty string if header
@@ -507,7 +507,7 @@ holds the header pairs.
 ### addRequestTrailer
 
 ``` {.sourceCode .cpp}
-void addRequestTrailer(StringView key, StringView value)
+void addRequestTrailer(std::string_view key, StringView value)
 ```
 
 Adds a new request trailer with the key and value if trailer does not
@@ -518,7 +518,7 @@ only when called in
 ### replaceRequestTrailer
 
 ``` {.sourceCode .cpp}
-void replaceRequestTrailer(StringView key, StringView value)
+void replaceRequestTrailer(std::string_view key, StringView value)
 ```
 
 Replaces the value of an existing request trailer with the given key, or
@@ -529,7 +529,7 @@ This method is effective only when called in
 ### removeRequestTrailer
 
 ``` {.sourceCode .cpp}
-void removeRequestTrailer(StringView key)
+void removeRequestTrailer(std::string_view key)
 ```
 
 Removes request trailer with the given key. No-op if the request trailer
@@ -550,7 +550,7 @@ effective only when called in
 ### getRequestTrailer
 
 ``` {.sourceCode .cpp}
-WasmDataPtr getRequestTrailer(StringView key)
+WasmDataPtr getRequestTrailer(std::string_view key)
 ```
 
 Gets value of trailer with the given key. Returns empty string if
@@ -575,7 +575,7 @@ holds the trailer pairs.
 ### addResponseTrailer
 
 ``` {.sourceCode .cpp}
-void addResponseTrailer(StringView key, StringView value)
+void addResponseTrailer(std::string_view key, StringView value)
 ```
 
 Adds a new response trailer with the key and value if trailer does not
@@ -586,7 +586,7 @@ only when called in
 ### replaceResponseTrailer
 
 ``` {.sourceCode .cpp}
-void replaceResponseTrailer(StringView key, StringView value)
+void replaceResponseTrailer(std::string_view key, StringView value)
 ```
 
 Replaces the value of an existing response trailer with the given key,
@@ -597,7 +597,7 @@ This method is effective only when called in
 ### removeResponseTrailer
 
 ``` {.sourceCode .cpp}
-void removeResponseTrailer(StringView key)
+void removeResponseTrailer(std::string_view key)
 ```
 
 Removes response trailer with the given key. No-op if the response
@@ -618,7 +618,7 @@ method is effective only when called in
 ### getResponseTrailer
 
 ``` {.sourceCode .cpp}
-WasmDataPtr getResponseTrailer(StringView key)
+WasmDataPtr getResponseTrailer(std::string_view key)
 ```
 
 Gets value of trailer with the given key. Returns empty string if
@@ -733,7 +733,7 @@ host stats sink.
 #### New
 
 ``` {.sourceCode .cpp}
-static Counter<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames)
+static Counter<Tags...>* New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames)
 ```
 
 Create a new counter with the given metric name and tag names. Example
@@ -816,7 +816,7 @@ Returns current value of a counter.
 #### New
 
 ``` {.sourceCode .cpp}
-static Gauge<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames)
+static Gauge<Tags...>* New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames)
 ```
 
 Create a new gauge with the given metric name and tag names. Example
@@ -900,7 +900,7 @@ Returns current value of a gauge.
 #### New
 
 ``` {.sourceCode .cpp}
-static Histogram<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames)
+static Histogram<Tags...>* New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames)
 ```
 
 Create a new histogram object with the given metric name and tag names.
@@ -1138,7 +1138,7 @@ Returns the start pointer of the data.
 #### view
 
 ``` {.sourceCode .cpp}
-StringView view()
+std::string_view view()
 ```
 
 Returns data as a string view constructed with the start pointer and the
@@ -1155,7 +1155,7 @@ Returns data as a string by converting the string view to string.
 #### pairs
 
 ``` {.sourceCode .cpp}
-std::vector<std::pair<StringView, StringView>> pairs()
+std::vector<std::pair<std::string_view, StringView>> pairs()
 ```
 
 Returns a vector of string view pair parsed from the data.
