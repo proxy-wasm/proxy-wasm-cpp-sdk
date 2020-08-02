@@ -19,10 +19,12 @@ on:
   pull_request:
     branches:
     - master
+    - 'envoy-release/**'
 
   push:
     branches:
     - master
+    - 'envoy-release/**'
 
 jobs:
 
