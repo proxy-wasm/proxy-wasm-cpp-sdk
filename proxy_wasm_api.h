@@ -52,25 +52,25 @@ public:
 };
 #endif
 
-inline WasmResult logTrace(StringView logMessage) {
+inline WasmResult logTrace(std::string_view logMessage) {
   return proxy_log(LogLevel::trace, logMessage.data(), logMessage.size());
 }
-inline WasmResult logDebug(StringView logMessage) {
+inline WasmResult logDebug(std::string_view logMessage) {
   return proxy_log(LogLevel::debug, logMessage.data(), logMessage.size());
 }
-inline WasmResult logInfo(StringView logMessage) {
+inline WasmResult logInfo(std::string_view logMessage) {
   return proxy_log(LogLevel::info, logMessage.data(), logMessage.size());
 }
-inline WasmResult logWarn(StringView logMessage) {
+inline WasmResult logWarn(std::string_view logMessage) {
   return proxy_log(LogLevel::warn, logMessage.data(), logMessage.size());
 }
-inline WasmResult logError(StringView logMessage) {
+inline WasmResult logError(std::string_view logMessage) {
   return proxy_log(LogLevel::error, logMessage.data(), logMessage.size());
 }
-inline WasmResult logCritical(StringView logMessage) {
+inline WasmResult logCritical(std::string_view logMessage) {
   return proxy_log(LogLevel::critical, logMessage.data(), logMessage.size());
 }
-inline void logAbort(StringView logMessag) {
+inline void logAbort(std::string_view logMessag) {
   logCritical(logMessag);
   abort();
 }
@@ -92,9 +92,9 @@ public:
   ~WasmData() { ::free(const_cast<char *>(data_)); }
   const char *data() { return data_; }
   size_t size() { return size_; }
-  StringView view() { return {data_, size_}; }
+  std::string_view view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
-  std::vector<std::pair<StringView, StringView>> pairs();
+  std::vector<std::pair<std::string_view, std::string_view>> pairs();
   template <typename T> T proto() {
     T p;
     p.ParseFromArray(data_, size_);
@@ -110,8 +110,8 @@ private:
 };
 typedef std::unique_ptr<WasmData> WasmDataPtr;
 
-inline std::vector<std::pair<StringView, StringView>> WasmData::pairs() {
-  std::vector<std::pair<StringView, StringView>> result;
+inline std::vector<std::pair<std::string_view, std::string_view>> WasmData::pairs() {
+  std::vector<std::pair<std::string_view, std::string_view>> result;
   if (!data())
     return result;
   auto p = data();
@@ -122,11 +122,11 @@ inline std::vector<std::pair<StringView, StringView>> WasmData::pairs() {
   for (int i = 0; i < n; i++) {
     int size = *reinterpret_cast<const int *>(p);
     p += sizeof(int);
-    result[i].first = StringView(s, size);
+    result[i].first = std::string_view(s, size);
     s += size + 1;
     size = *reinterpret_cast<const int *>(p);
     p += sizeof(int);
-    result[i].second = StringView(s, size);
+    result[i].second = std::string_view(s, size);
     s += size + 1;
   }
   return result;
@@ -227,7 +227,7 @@ public:
 
   // NB: with end_of_stream == true, callbacks can still occur: reset() to
   // prevent further callbacks.
-  WasmResult send(StringView message, bool end_of_stream);
+  WasmResult send(std::string_view message, bool end_of_stream);
   void close(); // NB: callbacks can still occur: reset() to prevent further
                 // callbacks.
   void reset();
@@ -301,10 +301,10 @@ private:
 // module.
 class RootContext : public ContextBase {
 public:
-  RootContext(uint32_t id, StringView root_id) : ContextBase(id), root_id_(root_id) {}
+  RootContext(uint32_t id, std::string_view root_id) : ContextBase(id), root_id_(root_id) {}
   ~RootContext() {}
 
-  StringView root_id() { return root_id_; }
+  std::string_view root_id() { return root_id_; }
 
   RootContext *asRoot() override { return this; }
   Context *asContext() override { return nullptr; }
@@ -336,17 +336,18 @@ public:
 
   // Default high level HTTP/gRPC interface. NB: overriding the low level
   // interface will disable this interface. Returns false on setup error.
-  WasmResult httpCall(StringView uri, const HeaderStringPairs &request_headers,
-                      StringView request_body, const HeaderStringPairs &request_trailers,
+  WasmResult httpCall(std::string_view uri, const HeaderStringPairs &request_headers,
+                      std::string_view request_body, const HeaderStringPairs &request_trailers,
                       uint32_t timeout_milliseconds, HttpCallCallback callback);
   // NB: the message is the response if status == OK and an error message
   // otherwise. Returns false on setup error.
-  WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-                            const HeaderStringPairs &initial_metadata, StringView request,
-                            uint32_t timeout_milliseconds, GrpcSimpleCallCallback callback);
-  WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-                            const HeaderStringPairs &initial_metadata, StringView request,
-                            uint32_t timeout_milliseconds,
+  WasmResult grpcSimpleCall(std::string_view service, std::string_view service_name,
+                            std::string_view method_name, const HeaderStringPairs &initial_metadata,
+                            std::string_view request, uint32_t timeout_milliseconds,
+                            GrpcSimpleCallCallback callback);
+  WasmResult grpcSimpleCall(std::string_view service, std::string_view service_name,
+                            std::string_view method_name, const HeaderStringPairs &initial_metadata,
+                            std::string_view request, uint32_t timeout_milliseconds,
                             std::function<void(size_t body_size)> success_callback,
                             std::function<void(GrpcStatus status)> failure_callback) {
     auto callback = [success_callback, failure_callback](GrpcStatus status, size_t body_size) {
@@ -359,13 +360,14 @@ public:
     return grpcSimpleCall(service, service_name, method_name, initial_metadata, request,
                           timeout_milliseconds, callback);
   }
-  WasmResult grpcCallHandler(StringView service, StringView service_name, StringView method_name,
-                             const HeaderStringPairs &initial_metadata, StringView request,
+  WasmResult grpcCallHandler(std::string_view service, std::string_view service_name,
+                             std::string_view method_name,
+                             const HeaderStringPairs &initial_metadata, std::string_view request,
                              uint32_t timeout_milliseconds,
                              std::unique_ptr<GrpcCallHandlerBase> handler);
 #ifdef PROXY_WASM_PROTOBUF
-  WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-                            const HeaderStringPairs &initial_metadata,
+  WasmResult grpcSimpleCall(std::string_view service, std::string_view service_name,
+                            std::string_view method_name, const HeaderStringPairs &initial_metadata,
                             const google::protobuf::MessageLite &request,
                             uint32_t timeout_milliseconds, GrpcSimpleCallCallback callback) {
     std::string serialized_request;
@@ -375,8 +377,8 @@ public:
     return grpcSimpleCall(service, service_name, method_name, initial_metadata, serialized_request,
                           timeout_milliseconds, callback);
   }
-  WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-                            const HeaderStringPairs &initial_metadata,
+  WasmResult grpcSimpleCall(std::string_view service, std::string_view service_name,
+                            std::string_view method_name, const HeaderStringPairs &initial_metadata,
                             const google::protobuf::MessageLite &request,
                             uint32_t timeout_milliseconds,
                             std::function<void(size_t body_size)> success_callback,
@@ -389,7 +391,8 @@ public:
                           timeout_milliseconds, success_callback, failure_callback);
   }
   // Returns false on setup error.
-  WasmResult grpcCallHandler(StringView service, StringView service_name, StringView method_name,
+  WasmResult grpcCallHandler(std::string_view service, std::string_view service_name,
+                             std::string_view method_name,
                              const HeaderStringPairs &initial_metadata,
                              const google::protobuf::MessageLite &request,
                              uint32_t timeout_milliseconds,
@@ -403,7 +406,8 @@ public:
   }
 #endif
   // Returns false on setup error.
-  WasmResult grpcStreamHandler(StringView service, StringView service_name, StringView method_name,
+  WasmResult grpcStreamHandler(std::string_view service, std::string_view service_name,
+                               std::string_view method_name,
                                const HeaderStringPairs &initial_metadata,
                                std::unique_ptr<GrpcStreamHandlerBase> handler);
 
@@ -420,7 +424,7 @@ private:
   std::unordered_map<uint32_t, std::unique_ptr<GrpcStreamHandlerBase>> grpc_streams_;
 };
 
-RootContext *getRoot(StringView root_id);
+RootContext *getRoot(std::string_view root_id);
 
 // Context for a stream. The distinguished context id == 0 is used for
 // non-stream calls.
@@ -485,12 +489,13 @@ Context *getContext(uint32_t context_id);
 RootContext *getRootContext(uint32_t context_id);
 ContextBase *getContextBase(uint32_t context_id);
 
-using RootFactory = std::function<std::unique_ptr<RootContext>(uint32_t id, StringView root_id)>;
+using RootFactory =
+    std::function<std::unique_ptr<RootContext>(uint32_t id, std::string_view root_id)>;
 using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext *root)>;
 
 // Create a factory from a class name.
 #define ROOT_FACTORY(_c)                                                                           \
-  [](uint32_t id, StringView root_id) -> std::unique_ptr<RootContext> {                            \
+  [](uint32_t id, std::string_view root_id) -> std::unique_ptr<RootContext> {                      \
     return std::make_unique<_c>(id, root_id);                                                      \
   }
 #define CONTEXT_FACTORY(_c)                                                                        \
@@ -503,10 +508,10 @@ using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootC
 // register_MyContext(CONTEXT_FACTORY(MyContext));
 struct RegisterContextFactory {
   RegisterContextFactory(ContextFactory context_factory, RootFactory root_factory,
-                         StringView root_id = "");
-  explicit RegisterContextFactory(RootFactory root_factory, StringView root_id = "")
+                         std::string_view root_id = "");
+  explicit RegisterContextFactory(RootFactory root_factory, std::string_view root_id = "")
       : RegisterContextFactory(nullptr, root_factory, root_id) {}
-  explicit RegisterContextFactory(ContextFactory context_factory, StringView root_id = "")
+  explicit RegisterContextFactory(ContextFactory context_factory, std::string_view root_id = "")
       : RegisterContextFactory(context_factory, nullptr, root_id) {}
 };
 
@@ -519,7 +524,7 @@ inline std::pair<uint32_t, WasmDataPtr> getStatus() {
 }
 
 // Generic selector
-inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts) {
+inline std::optional<WasmDataPtr> getProperty(std::initializer_list<std::string_view> parts) {
   size_t size = 0;
   for (auto part : parts) {
     size += part.size() + 1; // null terminated string value
@@ -548,7 +553,7 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
 // Durations are represented as int64 nanoseconds.
 // Timestamps are represented as int64 Unix nanoseconds.
 // Strings and bytes are represented as std::string.
-template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T *out) {
+template <typename T> inline bool getValue(std::initializer_list<std::string_view> parts, T *out) {
   auto buf = getProperty(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
@@ -559,7 +564,7 @@ template <typename T> inline bool getValue(std::initializer_list<StringView> par
 
 // Specialization for bytes and string values
 template <>
-inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::string *out) {
+inline bool getValue<std::string>(std::initializer_list<std::string_view> parts, std::string *out) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
@@ -570,7 +575,7 @@ inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::
 
 // Specialization for message types (including struct value for lists and maps)
 template <typename T>
-inline bool getMessageValue(std::initializer_list<StringView> parts, T *value_ptr) {
+inline bool getMessageValue(std::initializer_list<std::string_view> parts, T *value_ptr) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
@@ -582,12 +587,12 @@ inline bool getMessageValue(std::initializer_list<StringView> parts, T *value_pt
   return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
 }
 
-inline WasmResult setFilterState(StringView key, StringView value) {
+inline WasmResult setFilterState(std::string_view key, std::string_view value) {
   return static_cast<WasmResult>(
       proxy_set_property(key.data(), key.size(), value.data(), value.size()));
 }
 
-inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
+inline WasmResult setFilterStateStringValue(std::string_view key, std::string_view s) {
   return setFilterState(key, s);
 }
 
@@ -598,8 +603,8 @@ inline WasmResult continueResponse() { return proxy_continue_stream(WasmStreamTy
 inline WasmResult closeRequest() { return proxy_close_stream(WasmStreamType::Request); }
 inline WasmResult closeResponse() { return proxy_close_stream(WasmStreamType::Response); }
 
-inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_code_details,
-                                    StringView body,
+inline WasmResult sendLocalResponse(uint32_t response_code, std::string_view response_code_details,
+                                    std::string_view body,
                                     const HeaderStringPairs &additional_response_headers,
                                     GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
   const char *ptr = nullptr;
@@ -613,7 +618,7 @@ inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_
 }
 
 // SharedData
-inline WasmResult getSharedData(StringView key, WasmDataPtr *value, uint32_t *cas = nullptr) {
+inline WasmResult getSharedData(std::string_view key, WasmDataPtr *value, uint32_t *cas = nullptr) {
   uint32_t dummy_cas;
   const char *value_ptr = nullptr;
   size_t value_size = 0;
@@ -627,11 +632,11 @@ inline WasmResult getSharedData(StringView key, WasmDataPtr *value, uint32_t *ca
   return WasmResult::Ok;
 }
 
-inline WasmResult setSharedData(StringView key, StringView value, uint32_t cas = 0) {
+inline WasmResult setSharedData(std::string_view key, std::string_view value, uint32_t cas = 0) {
   return proxy_set_shared_data(key.data(), key.size(), value.data(), value.size(), cas);
 }
 
-inline WasmDataPtr getSharedDataValue(StringView key, uint32_t *cas = nullptr) {
+inline WasmDataPtr getSharedDataValue(std::string_view key, uint32_t *cas = nullptr) {
   WasmDataPtr data;
   auto result = getSharedData(key, &data, cas);
   if (result != WasmResult::Ok) {
@@ -641,16 +646,17 @@ inline WasmDataPtr getSharedDataValue(StringView key, uint32_t *cas = nullptr) {
 }
 
 // SharedQueue
-inline WasmResult registerSharedQueue(StringView queue_name, uint32_t *token) {
+inline WasmResult registerSharedQueue(std::string_view queue_name, uint32_t *token) {
   return proxy_register_shared_queue(queue_name.data(), queue_name.size(), token);
 }
 
-inline WasmResult resolveSharedQueue(StringView vm_id, StringView queue_name, uint32_t *token) {
+inline WasmResult resolveSharedQueue(std::string_view vm_id, std::string_view queue_name,
+                                     uint32_t *token) {
   return proxy_resolve_shared_queue(vm_id.data(), vm_id.size(), queue_name.data(),
                                     queue_name.size(), token);
 }
 
-inline WasmResult enqueueSharedQueue(uint32_t token, StringView data) {
+inline WasmResult enqueueSharedQueue(uint32_t token, std::string_view data) {
   return proxy_enqueue_shared_queue(token, data.data(), data.size());
 }
 
@@ -663,22 +669,24 @@ inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr *data) {
 }
 
 // Headers/Trailers
-inline WasmResult addHeaderMapValue(WasmHeaderMapType type, StringView key, StringView value) {
+inline WasmResult addHeaderMapValue(WasmHeaderMapType type, std::string_view key,
+                                    std::string_view value) {
   return proxy_add_header_map_value(type, key.data(), key.size(), value.data(), value.size());
 }
 
-inline WasmDataPtr getHeaderMapValue(WasmHeaderMapType type, StringView key) {
+inline WasmDataPtr getHeaderMapValue(WasmHeaderMapType type, std::string_view key) {
   const char *value_ptr = nullptr;
   size_t value_size = 0;
   proxy_get_header_map_value(type, key.data(), key.size(), &value_ptr, &value_size);
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline WasmResult replaceHeaderMapValue(WasmHeaderMapType type, StringView key, StringView value) {
+inline WasmResult replaceHeaderMapValue(WasmHeaderMapType type, std::string_view key,
+                                        std::string_view value) {
   return proxy_replace_header_map_value(type, key.data(), key.size(), value.data(), value.size());
 }
 
-inline WasmResult removeHeaderMapValue(WasmHeaderMapType type, StringView key) {
+inline WasmResult removeHeaderMapValue(WasmHeaderMapType type, std::string_view key) {
   return proxy_remove_header_map_value(type, key.data(), key.size());
 }
 
@@ -700,16 +708,16 @@ inline WasmResult getHeaderMapSize(WasmHeaderMapType type, size_t *size) {
   return proxy_get_header_map_size(type, size);
 }
 
-inline WasmResult addRequestHeader(StringView key, StringView value) {
+inline WasmResult addRequestHeader(std::string_view key, std::string_view value) {
   return addHeaderMapValue(WasmHeaderMapType::RequestHeaders, key, value);
 }
-inline WasmDataPtr getRequestHeader(StringView key) {
+inline WasmDataPtr getRequestHeader(std::string_view key) {
   return getHeaderMapValue(WasmHeaderMapType::RequestHeaders, key);
 }
-inline WasmResult replaceRequestHeader(StringView key, StringView value) {
+inline WasmResult replaceRequestHeader(std::string_view key, std::string_view value) {
   return replaceHeaderMapValue(WasmHeaderMapType::RequestHeaders, key, value);
 }
-inline WasmResult removeRequestHeader(StringView key) {
+inline WasmResult removeRequestHeader(std::string_view key) {
   return removeHeaderMapValue(WasmHeaderMapType::RequestHeaders, key);
 }
 inline WasmDataPtr getRequestHeaderPairs() {
@@ -722,16 +730,16 @@ inline WasmResult getRequestHeaderSize(size_t *size) {
   return getHeaderMapSize(WasmHeaderMapType::RequestHeaders, size);
 }
 
-inline WasmResult addRequestTrailer(StringView key, StringView value) {
+inline WasmResult addRequestTrailer(std::string_view key, std::string_view value) {
   return addHeaderMapValue(WasmHeaderMapType::RequestTrailers, key, value);
 }
-inline WasmDataPtr getRequestTrailer(StringView key) {
+inline WasmDataPtr getRequestTrailer(std::string_view key) {
   return getHeaderMapValue(WasmHeaderMapType::RequestTrailers, key);
 }
-inline WasmResult replaceRequestTrailer(StringView key, StringView value) {
+inline WasmResult replaceRequestTrailer(std::string_view key, std::string_view value) {
   return replaceHeaderMapValue(WasmHeaderMapType::RequestTrailers, key, value);
 }
-inline WasmResult removeRequestTrailer(StringView key) {
+inline WasmResult removeRequestTrailer(std::string_view key) {
   return removeHeaderMapValue(WasmHeaderMapType::RequestTrailers, key);
 }
 inline WasmDataPtr getRequestTrailerPairs() {
@@ -744,16 +752,16 @@ inline WasmResult getRequestTrailerSize(size_t *size) {
   return getHeaderMapSize(WasmHeaderMapType::RequestTrailers, size);
 }
 
-inline WasmResult addResponseHeader(StringView key, StringView value) {
+inline WasmResult addResponseHeader(std::string_view key, std::string_view value) {
   return addHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key, value);
 }
-inline WasmDataPtr getResponseHeader(StringView key) {
+inline WasmDataPtr getResponseHeader(std::string_view key) {
   return getHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key);
 }
-inline WasmResult replaceResponseHeader(StringView key, StringView value) {
+inline WasmResult replaceResponseHeader(std::string_view key, std::string_view value) {
   return replaceHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key, value);
 }
-inline WasmResult removeResponseHeader(StringView key) {
+inline WasmResult removeResponseHeader(std::string_view key) {
   return removeHeaderMapValue(WasmHeaderMapType::ResponseHeaders, key);
 }
 inline WasmDataPtr getResponseHeaderPairs() {
@@ -766,16 +774,16 @@ inline WasmResult getResponseHeaderSize(size_t *size) {
   return getHeaderMapSize(WasmHeaderMapType::ResponseHeaders, size);
 }
 
-inline WasmResult addResponseTrailer(StringView key, StringView value) {
+inline WasmResult addResponseTrailer(std::string_view key, std::string_view value) {
   return addHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key, value);
 }
-inline WasmDataPtr getResponseTrailer(StringView key) {
+inline WasmDataPtr getResponseTrailer(std::string_view key) {
   return getHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key);
 }
-inline WasmResult replaceResponseTrailer(StringView key, StringView value) {
+inline WasmResult replaceResponseTrailer(std::string_view key, std::string_view value) {
   return replaceHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key, value);
 }
-inline WasmResult removeResponseTrailer(StringView key) {
+inline WasmResult removeResponseTrailer(std::string_view key) {
   return removeHeaderMapValue(WasmHeaderMapType::ResponseTrailers, key);
 }
 inline WasmDataPtr getResponseTrailerPairs() {
@@ -800,7 +808,7 @@ inline WasmResult getBufferStatus(WasmBufferType type, size_t *size, uint32_t *f
   return proxy_get_buffer_status(type, size, flags);
 }
 
-inline WasmResult setBuffer(WasmBufferType type, size_t start, size_t length, StringView data,
+inline WasmResult setBuffer(WasmBufferType type, size_t start, size_t length, std::string_view data,
                             size_t *new_size = nullptr) {
   auto result = proxy_set_buffer_bytes(type, start, length, data.data(), data.size());
   if (result == WasmResult::Ok && new_size)
@@ -845,8 +853,9 @@ inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs &headers, void *
   *size_ptr = size;
 }
 
-inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs &request_headers,
-                               StringView request_body, const HeaderStringPairs &request_trailers,
+inline WasmResult makeHttpCall(std::string_view uri, const HeaderStringPairs &request_headers,
+                               std::string_view request_body,
+                               const HeaderStringPairs &request_trailers,
                                uint32_t timeout_milliseconds, uint32_t *token_ptr) {
   void *headers_ptr = nullptr, *trailers_ptr = nullptr;
   size_t headers_size = 0, trailers_size = 0;
@@ -862,7 +871,7 @@ inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs &request_
 
 // Low level metrics interface.
 
-inline WasmResult defineMetric(MetricType type, StringView name, uint32_t *metric_id) {
+inline WasmResult defineMetric(MetricType type, std::string_view name, uint32_t *metric_id) {
   return proxy_define_metric(type, name.data(), name.size(), metric_id);
 }
 
@@ -974,7 +983,7 @@ inline void MetricBase::partiallyResolveWithFields(const std::vector<std::string
 
 template <typename T> inline std::string toString(T t) { return std::to_string(t); }
 
-template <> inline std::string toString(StringView t) { return std::string(t); }
+template <> inline std::string toString(std::string_view t) { return std::string(t); }
 
 template <> inline std::string toString(const char *t) { return std::string(t); }
 
@@ -984,7 +993,7 @@ template <> inline std::string toString(bool t) { return t ? "true" : "false"; }
 
 template <typename T> struct StringToStringView { typedef T type; };
 
-template <> struct StringToStringView<std::string> { typedef StringView type; };
+template <> struct StringToStringView<std::string> { typedef std::string_view type; };
 
 inline uint32_t MetricBase::resolveFullName(const std::string &n) {
   auto it = metric_ids.find(n);
@@ -1037,10 +1046,10 @@ template <typename... Fields> inline uint64_t Metric::get(Fields... f) {
 }
 
 template <typename T> struct MetricTagDescriptor {
-  MetricTagDescriptor(StringView n) : name(n) {}
+  MetricTagDescriptor(std::string_view n) : name(n) {}
   MetricTagDescriptor(const char *n) : name(n) {}
   typedef T type;
-  StringView name;
+  std::string_view name;
 };
 
 template <typename T> inline MetricTag toMetricTag(const MetricTagDescriptor<T> &) { return {}; }
@@ -1053,7 +1062,7 @@ template <> inline MetricTag toMetricTag(const MetricTagDescriptor<std::string> 
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
-template <> inline MetricTag toMetricTag(const MetricTagDescriptor<StringView> &d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<std::string_view> &d) {
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
@@ -1103,9 +1112,9 @@ struct SimpleHistogram {
 };
 
 template <typename... Tags> struct Counter : public MetricBase {
-  static Counter<Tags...> *New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+  static Counter<Tags...> *New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Counter<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
+  Counter<Tags...>(std::string_view name, MetricTagDescriptor<Tags>... descriptors)
       : Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {
   }
 
@@ -1145,16 +1154,16 @@ private:
 };
 
 template <typename... Tags>
-inline Counter<Tags...> *Counter<Tags...>::New(StringView name,
+inline Counter<Tags...> *Counter<Tags...>::New(std::string_view name,
                                                MetricTagDescriptor<Tags>... descriptors) {
   return new Counter<Tags...>(std::string(name),
                               std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 template <typename... Tags> struct Gauge : public MetricBase {
-  static Gauge<Tags...> *New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+  static Gauge<Tags...> *New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Gauge<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
+  Gauge<Tags...>(std::string_view name, MetricTagDescriptor<Tags>... descriptors)
       : Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleGauge resolve(Tags... f) {
@@ -1191,16 +1200,16 @@ private:
 };
 
 template <typename... Tags>
-inline Gauge<Tags...> *Gauge<Tags...>::New(StringView name,
+inline Gauge<Tags...> *Gauge<Tags...>::New(std::string_view name,
                                            MetricTagDescriptor<Tags>... descriptors) {
   return new Gauge<Tags...>(std::string(name),
                             std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 template <typename... Tags> struct Histogram : public MetricBase {
-  static Histogram<Tags...> *New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+  static Histogram<Tags...> *New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Histogram<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
+  Histogram<Tags...>(std::string_view name, MetricTagDescriptor<Tags>... descriptors)
       : Histogram<Tags...>(std::string(name),
                            std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
@@ -1230,15 +1239,16 @@ private:
 };
 
 template <typename... Tags>
-inline Histogram<Tags...> *Histogram<Tags...>::New(StringView name,
+inline Histogram<Tags...> *Histogram<Tags...>::New(std::string_view name,
                                                    MetricTagDescriptor<Tags>... descriptors) {
   return new Histogram<Tags...>(std::string(name),
                                 std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
-inline WasmResult grpcCall(StringView service, StringView service_name, StringView method_name,
-                           const HeaderStringPairs &initial_metadata, StringView request,
-                           uint32_t timeout_milliseconds, uint32_t *token_ptr) {
+inline WasmResult grpcCall(std::string_view service, std::string_view service_name,
+                           std::string_view method_name, const HeaderStringPairs &initial_metadata,
+                           std::string_view request, uint32_t timeout_milliseconds,
+                           uint32_t *token_ptr) {
   void *metadata_ptr = nullptr;
   size_t metadata_size = 0;
   MakeHeaderStringPairsBuffer(initial_metadata, &metadata_ptr, &metadata_size);
@@ -1248,8 +1258,8 @@ inline WasmResult grpcCall(StringView service, StringView service_name, StringVi
 }
 
 #ifdef PROXY_WASM_PROTOBUF
-inline WasmResult grpcCall(StringView service, StringView service_name, StringView method_name,
-                           const HeaderStringPairs &initial_metadata,
+inline WasmResult grpcCall(std::string_view service, std::string_view service_name,
+                           std::string_view method_name, const HeaderStringPairs &initial_metadata,
                            const google::protobuf::MessageLite &request,
                            uint32_t timeout_milliseconds, uint32_t *token_ptr) {
   std::string serialized_request;
@@ -1261,7 +1271,8 @@ inline WasmResult grpcCall(StringView service, StringView service_name, StringVi
 }
 #endif
 
-inline WasmResult grpcStream(StringView service, StringView service_name, StringView method_name,
+inline WasmResult grpcStream(std::string_view service, std::string_view service_name,
+                             std::string_view method_name,
                              const HeaderStringPairs &initial_metadata, uint32_t *token_ptr) {
   void *metadata_ptr = nullptr;
   size_t metadata_size = 0;
@@ -1275,12 +1286,13 @@ inline WasmResult grpcCancel(uint32_t token) { return proxy_grpc_cancel(token); 
 
 inline WasmResult grpcClose(uint32_t token) { return proxy_grpc_close(token); }
 
-inline WasmResult grpcSend(uint32_t token, StringView message, bool end_stream) {
+inline WasmResult grpcSend(uint32_t token, std::string_view message, bool end_stream) {
   return proxy_grpc_send(token, message.data(), message.size(), end_stream ? 1 : 0);
 }
 
-inline WasmResult RootContext::httpCall(StringView uri, const HeaderStringPairs &request_headers,
-                                        StringView request_body,
+inline WasmResult RootContext::httpCall(std::string_view uri,
+                                        const HeaderStringPairs &request_headers,
+                                        std::string_view request_body,
                                         const HeaderStringPairs &request_trailers,
                                         uint32_t timeout_milliseconds, HttpCallCallback callback) {
   uint32_t token = 0;
@@ -1301,11 +1313,11 @@ inline void RootContext::onHttpCallResponse(uint32_t token, uint32_t headers, si
   }
 }
 
-inline WasmResult RootContext::grpcSimpleCall(StringView service, StringView service_name,
-                                              StringView method_name,
-                                              const HeaderStringPairs &initial_metadata,
-                                              StringView request, uint32_t timeout_milliseconds,
-                                              Context::GrpcSimpleCallCallback callback) {
+inline WasmResult
+RootContext::grpcSimpleCall(std::string_view service, std::string_view service_name,
+                            std::string_view method_name, const HeaderStringPairs &initial_metadata,
+                            std::string_view request, uint32_t timeout_milliseconds,
+                            Context::GrpcSimpleCallCallback callback) {
   uint32_t token = 0;
   WasmResult result = grpcCall(service, service_name, method_name, initial_metadata, request,
                                timeout_milliseconds, &token);
@@ -1334,7 +1346,7 @@ inline void GrpcStreamHandlerBase::close() {
   // NB: else callbacks can still occur: reset() to prevent further callbacks.
 }
 
-inline WasmResult GrpcStreamHandlerBase::send(StringView message, bool end_of_stream) {
+inline WasmResult GrpcStreamHandlerBase::send(std::string_view message, bool end_of_stream) {
   WasmResult r = grpcSend(token_, message, end_of_stream);
   if (r != WasmResult::Ok) {
     return r;
@@ -1437,11 +1449,10 @@ inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status) {
   }
 }
 
-inline WasmResult RootContext::grpcCallHandler(StringView service, StringView service_name,
-                                               StringView method_name,
-                                               const HeaderStringPairs &initial_metadata,
-                                               StringView request, uint32_t timeout_milliseconds,
-                                               std::unique_ptr<GrpcCallHandlerBase> handler) {
+inline WasmResult RootContext::grpcCallHandler(
+    std::string_view service, std::string_view service_name, std::string_view method_name,
+    const HeaderStringPairs &initial_metadata, std::string_view request,
+    uint32_t timeout_milliseconds, std::unique_ptr<GrpcCallHandlerBase> handler) {
   uint32_t token = 0;
   auto result = grpcCall(service, service_name, method_name, initial_metadata, request,
                          timeout_milliseconds, &token);
@@ -1453,8 +1464,9 @@ inline WasmResult RootContext::grpcCallHandler(StringView service, StringView se
   return result;
 }
 
-inline WasmResult RootContext::grpcStreamHandler(StringView service, StringView service_name,
-                                                 StringView method_name,
+inline WasmResult RootContext::grpcStreamHandler(std::string_view service,
+                                                 std::string_view service_name,
+                                                 std::string_view method_name,
                                                  const HeaderStringPairs &initial_metadata,
                                                  std::unique_ptr<GrpcStreamHandlerBase> handler) {
   uint32_t token = 0;

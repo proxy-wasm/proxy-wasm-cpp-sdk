@@ -25,7 +25,7 @@ static std::unordered_map<int32_t, std::unique_ptr<ContextBase>> context_map;
 static std::unordered_map<std::string, RootContext *> root_context_map;
 
 RegisterContextFactory::RegisterContextFactory(ContextFactory context_factory,
-                                               RootFactory root_factory, StringView root_id) {
+                                               RootFactory root_factory, std::string_view root_id) {
   if (!root_factories) {
     root_factories = new std::unordered_map<std::string, RootFactory>;
     context_factories = new std::unordered_map<std::string, ContextFactory>;
@@ -114,7 +114,7 @@ RootContext *getRootContext(uint32_t context_id) {
   return it->second->asRoot();
 }
 
-RootContext *getRoot(StringView root_id) {
+RootContext *getRoot(std::string_view root_id) {
   auto it = root_context_map.find(std::string(root_id));
   if (it != root_context_map.end()) {
     return it->second;
