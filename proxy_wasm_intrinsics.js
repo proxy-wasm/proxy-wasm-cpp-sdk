@@ -18,6 +18,7 @@
 mergeInto(LibraryManager.library, {
   proxy_get_configuration: function() {},
   proxy_log: function() {},
+  proxy_get_log_level: function() {},
   proxy_set_tick_period_milliseconds: function() {},
   proxy_get_current_time_nanoseconds: function() {},
   proxy_get_status: function() {},
