@@ -37,6 +37,7 @@ extern "C" WasmResult proxy_get_status(uint32_t *status_code_ptr, const char **m
 
 // Logging
 extern "C" WasmResult proxy_log(LogLevel level, const char *logMessage, size_t messageSize);
+extern "C" WasmResult proxy_get_log_level(LogLevel *level);
 
 // Timer (will be set for the root context, e.g. onStart, onTick).
 extern "C" WasmResult proxy_set_tick_period_milliseconds(uint32_t millisecond);
