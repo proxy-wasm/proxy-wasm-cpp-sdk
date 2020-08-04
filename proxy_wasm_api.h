@@ -289,6 +289,9 @@ public:
   // Called when a foreign function event arrives.
   virtual void onForeignFunction(uint32_t /* foreign_function_id */, uint32_t /* data_size */) {}
 
+  // Return the log level configured for the "wasm" logger in the host
+  WasmResult getLogLevel(LogLevel *level) { return proxy_get_log_level(level); }
+
   using HttpCallCallback =
       std::function<void(uint32_t, size_t, uint32_t)>; // headers, body_size, trailers
   using GrpcSimpleCallCallback = std::function<void(GrpcStatus status, size_t body_size)>;
