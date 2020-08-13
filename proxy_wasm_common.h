@@ -70,6 +70,8 @@ inline std::string toString(WasmResult r) {
     _CASE(InternalFailure);
     _CASE(BrokenConnection);
     _CASE(Unimplemented);
+  default:
+    return "Unknown";
   }
 }
 #undef _CASE
