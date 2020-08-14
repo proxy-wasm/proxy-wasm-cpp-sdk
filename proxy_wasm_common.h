@@ -71,6 +71,7 @@ inline std::string toString(WasmResult r) {
     _CASE(BrokenConnection);
     _CASE(Unimplemented);
   }
+  return "Unknown";
 }
 #undef _CASE
 
