@@ -21,6 +21,7 @@
 // NOLINT(namespace-envoy)
 #pragma once
 
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <string>
