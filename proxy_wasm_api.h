@@ -706,7 +706,9 @@ inline WasmResult setHeaderMapPairs(WasmHeaderMapType type, const HeaderStringPa
   const char *ptr = nullptr;
   size_t size = 0;
   exportPairs(pairs, &ptr, &size);
-  return proxy_set_header_map_pairs(type, ptr, size);
+  auto result = proxy_set_header_map_pairs(type, ptr, size);
+  ::free(ptr);
+  return result;
 }
 
 inline WasmResult getHeaderMapSize(WasmHeaderMapType type, size_t *size) {
