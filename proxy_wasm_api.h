@@ -285,6 +285,9 @@ public:
 
   virtual void onCreate() {}
   virtual bool onDoneBase() = 0;
+  // Called on Stream Context after onDone when logging is requested or called on Root Context
+  // if so requested.
+  virtual void onLog() {}
   // Called to indicate that no more calls will come and this context is being
   // deleted.
   virtual void onDelete() {} // Called when the stream or VM is being deleted.
@@ -476,7 +479,6 @@ public:
     return FilterTrailersStatus::Continue;
   }
   virtual void onDone() {} // Called when the stream has completed.
-  virtual void onLog() {}  // Called after onDone when logging is requested.
 
 private:
   // For stream Contexts, onDone always returns true.
