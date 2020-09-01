@@ -227,7 +227,7 @@ extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_done(uint32_t context_id) {
 }
 
 extern "C" PROXY_WASM_KEEPALIVE void proxy_on_log(uint32_t context_id) {
-  getContext(context_id)->onLog();
+  getContextBase(context_id)->onLog();
 }
 
 extern "C" PROXY_WASM_KEEPALIVE void proxy_on_delete(uint32_t context_id) {
