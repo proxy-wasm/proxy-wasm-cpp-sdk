@@ -531,7 +531,33 @@ inline std::pair<uint32_t, WasmDataPtr> getStatus() {
 }
 
 // Generic selector
-inline std::optional<WasmDataPtr> getProperty(std::initializer_list<std::string_view> parts) {
+inline std::optional<WasmDataPtr>
+getProperty(const std::initializer_list<std::string_view> &parts) {
+  size_t size = 0;
+  for (auto part : parts) {
+    size += part.size() + 1; // null terminated string value
+  }
+
+  char *buffer = static_cast<char *>(::malloc(size));
+  char *b = buffer;
+
+  for (auto part : parts) {
+    memcpy(b, part.data(), part.size());
+    b += part.size();
+    *b++ = 0;
+  }
+
+  const char *value_ptr = nullptr;
+  size_t value_size = 0;
+  auto result = proxy_get_property(buffer, size, &value_ptr, &value_size);
+  ::free(buffer);
+  if (result != WasmResult::Ok) {
+    return {};
+  }
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+template <typename S> inline std::optional<WasmDataPtr> getProperty(const std::vector<S> &parts) {
   size_t size = 0;
   for (auto part : parts) {
     size += part.size() + 1; // null terminated string value
@@ -560,7 +586,8 @@ inline std::optional<WasmDataPtr> getProperty(std::initializer_list<std::string_
 // Durations are represented as int64 nanoseconds.
 // Timestamps are represented as int64 Unix nanoseconds.
 // Strings and bytes are represented as std::string.
-template <typename T> inline bool getValue(std::initializer_list<std::string_view> parts, T *out) {
+template <typename T>
+inline bool getValue(const std::initializer_list<std::string_view> &parts, T *out) {
   auto buf = getProperty(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
@@ -571,7 +598,39 @@ template <typename T> inline bool getValue(std::initializer_list<std::string_vie
 
 // Specialization for bytes and string values
 template <>
-inline bool getValue<std::string>(std::initializer_list<std::string_view> parts, std::string *out) {
+inline bool getValue<std::string>(const std::initializer_list<std::string_view> &parts,
+                                  std::string *out) {
+  auto buf = getProperty(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
+}
+
+template <typename S, typename T> inline bool getValue(const std::vector<S> &parts, T *out) {
+  auto buf = getProperty(parts);
+  if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
+    return false;
+  }
+  *out = *reinterpret_cast<const T *>(buf.value()->data());
+  return true;
+}
+
+template <>
+inline bool getValue<std::string, std::string>(const std::vector<std::string> &parts,
+                                               std::string *out) {
+  auto buf = getProperty(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
+}
+
+template <>
+inline bool getValue<std::string_view, std::string>(const std::vector<std::string_view> &parts,
+                                                    std::string *out) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
@@ -582,7 +641,20 @@ inline bool getValue<std::string>(std::initializer_list<std::string_view> parts,
 
 // Specialization for message types (including struct value for lists and maps)
 template <typename T>
-inline bool getMessageValue(std::initializer_list<std::string_view> parts, T *value_ptr) {
+inline bool getMessageValue(const std::initializer_list<std::string_view> &parts, T *value_ptr) {
+  auto buf = getProperty(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  if (buf.value()->size() == 0) {
+    value_ptr = nullptr;
+    return true;
+  }
+  return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
+}
+
+template <typename S, typename T>
+inline bool getMessageValue(const std::vector<S> &parts, T *value_ptr) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
