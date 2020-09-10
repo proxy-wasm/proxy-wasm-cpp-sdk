@@ -1483,7 +1483,6 @@ inline void RootContext::onGrpcReceive(uint32_t token, size_t body_size) {
     auto it = grpc_streams_.find(token);
     if (it != grpc_streams_.end()) {
       it->second->onReceive(body_size);
-      grpc_streams_.erase(token);
       return;
     }
   }
