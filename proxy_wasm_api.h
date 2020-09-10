@@ -201,6 +201,7 @@ public:
   RootContext *context() { return context_; }
 
   void cancel();
+  uint32_t token() { return token_; }
 
   virtual void onSuccess(size_t body_size) = 0;
   virtual void onFailure(GrpcStatus status) = 0;
@@ -233,6 +234,7 @@ public:
   void close(); // NB: callbacks can still occur: reset() to prevent further
                 // callbacks.
   void reset();
+  uint32_t token() { return token_; }
 
   virtual void onReceiveInitialMetadata(uint32_t /* headers */) {}
   virtual void onReceiveTrailingMetadata(uint32_t /* trailers */) {}
