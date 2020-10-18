@@ -25,7 +25,7 @@ emcc -s EMIT_EMSCRIPTEN_METADATA=1 -s STANDALONE_WASM=1 -s EXPORTED_FUNCTIONS=['
 
 for arg in "$@"
 do
-    if [ ${arg: -2} == ".d" ]; then
+    if [ "${arg: -2}" == ".d" ]; then
         echo Fixing $arg
         sed -e 's%[^ ]*/external/emscripten_toolchain/upstream/emscripten/system/%external/emscripten_toolchain/upstream/emscripten/system/%' $arg > $arg.tmp
         mv $arg.tmp $arg
