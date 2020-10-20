@@ -9,11 +9,12 @@ http_archive(
     name = "emscripten_toolchain",
     build_file = "//:emscripten-toolchain.BUILD",
     patch_cmds = [
-        "./emsdk install 1.39.19-upstream",
-        "./emsdk activate --embedded 1.39.19-upstream",
+        "./emsdk install 2.0.7",
+        "./emsdk activate --embedded 2.0.7",
     ],
-    strip_prefix = "emsdk-dec8a63594753fe5f4ad3b47850bf64d66c14a4e",
-    url = "https://github.com/emscripten-core/emsdk/archive/dec8a63594753fe5f4ad3b47850bf64d66c14a4e.tar.gz",
+    strip_prefix = "emsdk-2.0.7",
+    url = "https://github.com/emscripten-core/emsdk/archive/2.0.7.tar.gz",
+    sha256 = "ce7a5c76e8b425aca874cea329fd9ac44b203b777053453b6a37b4496c5ce34f"
 )
 
 # required by com_google_protobuf

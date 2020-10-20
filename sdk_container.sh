@@ -51,8 +51,8 @@ rm -rf protobuf
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.39.2
-./emsdk activate 1.39.2
+./emsdk install 2.0.7
+./emsdk activate 2.0.7
 source ./emsdk_env.sh
 cd
 
@@ -60,7 +60,7 @@ cd
 git clone https://github.com/abseil/abseil-cpp
 cd abseil-cpp
 git checkout 14550beb3b7b97195e483fb74b5efb906395c31e -b Jul302019 # Jul 30 2019
-emconfigure cmake -DCMAKE_CXX_STANDARD=17 "."
+emcmake cmake -DCMAKE_CXX_STANDARD=17 "."
 emmake make
 cd
 
