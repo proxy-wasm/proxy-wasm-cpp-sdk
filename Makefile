@@ -18,10 +18,11 @@ ${CPP_API}/libprotobuf.a ${CPP_API}/libprotobuf-lite.a:
 	&& cd wasm-patches && git checkout 4bba8b2f38b5004f87489642b6ca4525ae72fe7f \
 	&& cd .. && git apply wasm-patches/*.patch \
 	&& ./autogen.sh \
-	&& emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto -s WASM_OBJECT_FILES=0 --llvm-lto 1" \
+	&& emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto" \
 	&& emmake make \
-	&& cp src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a \
-	&& cp src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
+	&& cd .. \
+	&& cp protobuf-wasm/src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a \
+	&& cp protobuf-wasm/src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
 
 clean:
 	rm -f proxy_wasm_intrinsics.pb.h proxy_wasm_intrinsics_lite.pb.h struct_lite.pb.h ${CPP_API}/libprotobuf.a ${CPP_API}/libprotobuf-lite.a

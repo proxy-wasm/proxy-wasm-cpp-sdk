@@ -31,7 +31,9 @@ export EMCC_WASM_BACKEND=1
 
 #echo "$(pwd)/external/emscripten_toolchain/emsdk_env.sh"
 #realpath "external/emscripten_toolchain/emsdk_env.sh"
-source "${EMSCRIPTEN_ROOT}/emsdk_env.sh"
+pushd "${EMSCRIPTEN_ROOT}"
+source "./emsdk_env.sh"
+popd
 
  # the emscripten sdk does some path comparison, so make EM_CACHE an absolute path to make it work. 
 mkdir -p "${TOOLCHAIN_ROOT}/tmp/emscripten_cache"

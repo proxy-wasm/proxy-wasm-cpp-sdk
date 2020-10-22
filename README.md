@@ -110,7 +110,7 @@ all: plugin.wasm
 
 %.wasm %.wat: %.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_enums.h ${CPP_API}/proxy_wasm_externs.h ${CPP_API}/proxy_wasm_api.h ${CPP_API}/proxy_wasm_intrinsics.js ${CPP_CONTEXT_LIB}
         ls /root
-                em++ -s STANDALONE_WASM=1 -s EMIT_EMSCRIPTEN_METADATA=1 -s EXPORTED_FUNCTIONS=['_malloc'] --std=c++17 -O3 -flto -s WASM_OBJECT_FILES=0 --llvm-lto 1 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js ${ABSL_CPP} $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a -o $*.wasm
+                em++ --no-entry -s EXPORTED_FUNCTIONS=['_malloc'] --std=c++17 -O3 -flto -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js ${ABSL_CPP} $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a -o $*.wasm
 ```
 
 Precompiled abseil libraries are also available, so the above can also be done as:
@@ -126,7 +126,7 @@ all: plugin.wasm
 
 %.wasm %.wat: %.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_enums.h ${CPP_API}/proxy_wasm_externs.h ${CPP_API}/proxy_wasm_api.h ${CPP_API}/proxy_wasm_intrinsics.js ${CPP_CONTEXT_LIB}
         ls /root
-                em++ -s STANDALONE_WASM=1 -s EMIT_EMSCRIPTEN_METADATA=1 -s EXPORTED_FUNCTIONS=['_malloc'] --std=c++17 -O3 -flto -s WASM_OBJECT_FILES=0 --llvm-lto 1 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js  $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a ${ABSL_LIBS} -o $*.wasm
+                em++ --no-entry -s EXPORTED_FUNCTIONS=['_malloc'] --std=c++17 -O3 -flto -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js  $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a ${ABSL_LIBS} -o $*.wasm
 ```
 
 ### Ownership of the resulting .wasm files
@@ -175,8 +175,8 @@ sudo make install
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.39.2
-./emsdk activate 1.39.2
+./emsdk install 2.0.7
+./emsdk activate 2.0.7
 
 source ./emsdk\_env.sh
 ```
@@ -189,7 +189,7 @@ It is possible later versions will work, e.g.
 ./emsdk activate latest
 ```
 
-However 1.39.2 is known to work.
+However 2.0.7 is known to work.
 
 ### Rebuilding the libprotobuf.a files
 
@@ -203,10 +203,11 @@ git clone https://github.com/kwonoj/protobuf-wasm wasm-patches
 cd wasm-patches && git checkout 4bba8b2f38b5004f87489642b6ca4525ae72fe7f && cd ..
 git apply wasm-patches/*.patch
 ./autogen.sh
-emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto -s WASM_OBJECT_FILES=0 --llvm-lto 1"
+emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto"
 emmake make
-cp src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a
-cp src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
+cd ..
+cp protobuf-wasm/src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a
+cp protobuf-wasm/src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
 ```
 
 ### WAVM binaries
