@@ -16,7 +16,7 @@ public:
 
 class ExampleContext : public Context {
 public:
-  explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
+  explicit ExampleContext(uint32_t id, RootContext *root) : Context(id, root) {}
 
   void onCreate() override;
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
@@ -51,7 +51,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   auto result = getRequestHeaderPairs();
   auto pairs = result->pairs();
   LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
-  for (auto& p : pairs) {
+  for (auto &p : pairs) {
     LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
   return FilterHeadersStatus::Continue;
@@ -62,7 +62,7 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
   auto result = getResponseHeaderPairs();
   auto pairs = result->pairs();
   LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
-  for (auto& p : pairs) {
+  for (auto &p : pairs) {
     LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
   addResponseHeader("X-Wasm-custom", "FOO");
