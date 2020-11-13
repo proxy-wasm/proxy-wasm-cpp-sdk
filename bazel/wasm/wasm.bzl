@@ -73,15 +73,10 @@ def wasm_cc_binary(name, tags = [], **kwargs):
     kwargs.setdefault("visibility", ["//visibility:public"])
     cc_binary(
         name = wasm_name,
-        # Adding manual tag it won't be built in non-Wasm (e.g. x86_64 config)
-        # when an wildcard is specified, but it will be built in Wasm configuration
-        # when the wasm_binary below is built.
-        tags = ["manual"],
         **kwargs
     )
 
     wasm_cc_binary_rule(
         name = name,
         binary = ":" + wasm_name,
-        tags = tags + ["manual"],
     )
