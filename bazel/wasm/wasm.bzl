@@ -21,7 +21,7 @@ def _wasm_cc_transition_impl(settings, attr):
         "//command_line_option:crosstool_top": "@proxy_wasm_cpp_sdk//toolchain:emscripten",
 
         # Overriding copt/cxxopt/linkopt to prevent sanitizers/coverage options leak
-        # into WASM build configuration
+        # into Wasm build configuration
         "//command_line_option:copt": [],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
@@ -60,9 +60,9 @@ def _wasm_attrs(transition):
         "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
     }
 
-# WASM binary rule implementation.
-# This copies the binary specified in binary attribute in WASM configuration to
-# target configuration, so a binary in non-WASM configuration can depend on them.
+# Wasm binary rule implementation.
+# This copies the binary specified in binary attribute in Wasm configuration to
+# target configuration, so a binary in non-Wasm configuration can depend on them.
 wasm_cc_binary_rule = rule(
     implementation = wasm_binary_impl,
     attrs = _wasm_attrs(wasm_cc_transition),
@@ -73,8 +73,8 @@ def wasm_cc_binary(name, tags = [], **kwargs):
     kwargs.setdefault("visibility", ["//visibility:public"])
     cc_binary(
         name = wasm_name,
-        # Adding manual tag it won't be built in non-WASM (e.g. x86_64 config)
-        # when an wildcard is specified, but it will be built in WASM configuration
+        # Adding manual tag it won't be built in non-Wasm (e.g. x86_64 config)
+        # when an wildcard is specified, but it will be built in Wasm configuration
         # when the wasm_binary below is built.
         tags = ["manual"],
         **kwargs
