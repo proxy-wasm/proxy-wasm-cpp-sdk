@@ -83,5 +83,5 @@ def wasm_cc_binary(name, tags = [], **kwargs):
     wasm_cc_binary_rule(
         name = name,
         binary = ":" + wasm_name,
-        tags = tags + ["manual"],
+        tags = tags,
     )
