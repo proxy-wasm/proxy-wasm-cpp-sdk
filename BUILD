@@ -52,7 +52,7 @@ proto_library(
 # include lite protobuf support
 cc_library(
     name = "proxy_wasm_intrinsics_lite",
-    hdrs = ["proxy_wasm_intrinsics_lite.h"],
+    hdrs = ["proxy_wasm_intrinsics.h"],
     copts = ["-DPROXY_WASM_PROTOBUF_LITE=1"],
     visibility = ["//visibility:public"],
     deps = [
@@ -65,7 +65,7 @@ cc_library(
 # include full protobuf support
 cc_library(
     name = "proxy_wasm_intrinsics_full",
-    hdrs = ["proxy_wasm_intrinsics_full.h"],
+    hdrs = ["proxy_wasm_intrinsics.h"],
     copts = ["-DPROXY_WASM_PROTOBUF_FULL=1"],
     visibility = ["//visibility:public"],
     deps = [

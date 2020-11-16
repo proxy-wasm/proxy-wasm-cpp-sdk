@@ -1,7 +1,17 @@
 FROM ubuntu:bionic
 
-COPY ./sdk_container.sh /
-COPY ./build_wasm.sh /
-COPY *.cc *.h *.js *.proto Makefile* *.a /sdk/
+RUN apt-get update && apt-get -y dist-upgrade && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    gcc \
+    python3 \
+    xz-utils
 
-RUN ./sdk_container.sh
+RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.1.0/bazelisk-linux-amd64
+RUN mv bazelisk-linux-amd64 /usr/bin/bazel
+RUN chmod +x usr/bin/bazel
+
+RUN mkdir -p /home/.cache
+RUN chmod 777 /home
+RUN chmod 777 /home/.cache
