@@ -17,7 +17,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file"
 def wasm_dependencies():
     _http_archive(
         name = "emscripten_toolchain",
-        build_file = "//:emscripten-toolchain.BUILD",
+        build_file = "@proxy_wasm_cpp_sdk//:emscripten-toolchain.BUILD",
         patch_cmds = [
             "./emsdk install 1.39.19-upstream",
             "./emsdk activate --embedded 1.39.19-upstream",
