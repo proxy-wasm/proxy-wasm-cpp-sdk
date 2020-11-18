@@ -93,11 +93,3 @@ proto_library(
         "@com_google_protobuf//:struct_proto",
     ],
 )
-
-filegroup(
-    name = "jslib",
-    srcs = [
-        "proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
-)
