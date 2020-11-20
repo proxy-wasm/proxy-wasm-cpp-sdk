@@ -68,10 +68,10 @@ wasm_cc_binary_rule = rule(
     attrs = _wasm_attrs(wasm_cc_transition),
 )
 
-def wasm_cc_binary(name, tags = [], repository = "", **kwargs):
+def wasm_cc_binary(name, tags = [], in_primary_repo = False, **kwargs):
     wasm_name = "_wasm_" + name
     kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib"])
-    if repository == "@proxy_wasm_cpp_sdk":
+    if in_primary_repo:
         js = "--js-library proxy_wasm_intrinsics.js"
     else:
         js = "--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js"

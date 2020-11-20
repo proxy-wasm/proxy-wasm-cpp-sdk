@@ -5,7 +5,7 @@ licenses(["notice"])  # Apache 2
 wasm_cc_binary(
     name = "http_wasm_example.wasm",
     srcs = ["http_wasm_example.cc"],
-    repository = "@proxy_wasm_cpp_sdk",
+    in_primary_repo = True,
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
