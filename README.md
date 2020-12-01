@@ -8,28 +8,21 @@ The SDK uses [bazel](https://bazel.build/) for its build.
 
 ## Creating a project for use
 
-Create a directory with your WORKSPACE file, source files, and BUILD files:
+Create a directory with your `WORKSPACE` file, source files, and `BUILD` files:
 
-WORKSPACE file (WORKSPACE):
+`WORKSPACE`:
 
 ```
 workspace(name = "my_extension")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# Point to local proxy wasm sdk. 
-# If you want to import remote proxy wasm sdk, use the `http_archive` rule below.
-local_repository(
-    name = "proxy_wasm_cpp_sdk",
-    path = "<path-to-local-proxy-cpp-sdk>",
-)
-
 # Replace '<CPP-SDK-SHA>' with actual SHA from github.
-# http_archive(
-#     name = "proxy_wasm_cpp_sdk",
-#     strip_prefix = "proxy-wasm-cpp-sdk-<CPP-SDK-SHA>",
-#     url = "https://github.com/bianpengyuan/proxy-wasm-cpp-sdk/archive/<CPP-SDK-SHA>.tar.gz",
-# )
+http_archive(
+    name = "proxy_wasm_cpp_sdk",
+    strip_prefix = "proxy-wasm-cpp-sdk-<CPP-SDK-SHA>",
+    url = "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/<CPP-SDK-SHA>.tar.gz",
+)
 
 load("@proxy_wasm_cpp_sdk//bazel/dep:deps.bzl", "wasm_dependencies")
 
@@ -40,7 +33,7 @@ load("@proxy_wasm_cpp_sdk//bazel/dep:deps_extra.bzl", "wasm_dependencies_extra")
 wasm_dependencies_extra()
 ```
 
-Source file (myproject.cc):
+Source file (`my_plugin.cc`):
 
 ```
 #include <string>
@@ -67,15 +60,15 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t headers, bool end_
 void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
 ```
 
-BUILD file (BUILD):
+`BUILD`:
 
 ```
 load("@proxy_wasm_cpp_sdk//bazel/wasm:wasm.bzl", "wasm_cc_binary")
 
 wasm_cc_binary(
-    name = "my_extension.wasm",
+    name = "my_plugin.wasm",
     srcs = [
-        "source.cc",
+        "my_plugin.cc",
     ],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
@@ -85,7 +78,7 @@ wasm_cc_binary(
 
 ## Compiling with Bazel
 
-It is recommended to use Bazelisk installed as bazel:
+It is recommended to use Bazelisk installed as Bazel:
 
 On Linux, run the following commands:
 
@@ -94,7 +87,7 @@ sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/release
 sudo chmod +x /usr/local/bin/bazel
 ```
 
-Several dependencies are needs in order to build a C++ WebAssembly extensions with Bazel.
+Several dependencies are needs in order to build a C++ WebAssembly plugins with Bazel.
 
 on Unbuntu, run the following command:
 
@@ -102,13 +95,13 @@ on Unbuntu, run the following command:
 sudo apt-get install gcc curl python3
 ```
 
-Then run the following bazel command:
+Then run the following Bazel command:
 
 ```
-bazel build //:my_extension.wasm
+bazel build //:my_plugin.wasm
 ```
 
-After the command finishes, you should be able to find `my_extension.wasm` file under `./bazel-bin` folder.
+After the command finishes, you should be able to find `my_plugin.wasm` file under `./bazel-bin` folder.
 
 ### Compiling with the Docker build image
 
@@ -131,10 +124,10 @@ docker run \
 -w /work \
 wasmsdk \
 /bin/bash -lc \
-'bazel build //:my_extension.wasm && cp bazel-bin/my_extension.wasm my_extension.wasm && bazel clean --expunge'
+'bazel build //:my_plugin.wasm && cp bazel-bin/my_plugin.wasm my_plugin.wasm && bazel clean --expunge'
 ```
 
-After the command finishes, you should be able to find `my_extension.wasm` file along with source files.
+After the command finishes, you should be able to find `my_plugin.wasm` file along with source files.
 
 [build-badge]: https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/workflows/C++/badge.svg?branch=master
 [build-link]: https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/actions?query=workflow%3AC%2B%2B+branch%3Amaster
