@@ -75,4 +75,23 @@ jobs:
 
     - name: Test
       run: |
+        set -ex
         "${GITHUB_WORKSPACE}/bin/bazel" build //...
+
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      
+      - name: Build extensions with container
+        run: |
+          set -ex
+
+          docker build -t wasmsdk -f sdk.Dockerfile .
+
+          docker run \
+            -u $(id -u):$(id -g) -e HOME="/home" -e USER=${USER} \
+            --mount type=bind,source=${PWD},target=/work -w /work \
+            wasmsdk /bin/bash -lc 'bazel build //example:http_wasm_example.wasm'

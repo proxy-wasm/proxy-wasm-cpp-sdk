@@ -105,12 +105,12 @@ After the command finishes, you should be able to find `myplugin.wasm` file unde
 
 ### Compiling with the Docker build image
 
-A Dockerfile for the C++ SDK is provided in Dockerfile-sdk.
+A Dockerfile for the C++ SDK is provided in sdk.Dockerfile.
 
 It can built in this directory by:
 
 ```
-docker build -t wasmsdk -f Dockerfile-sdk .
+docker build -t wasmsdk -f sdk.Dockerfile .
 ```
 
 The docker image can be used for compiling wasm files:
