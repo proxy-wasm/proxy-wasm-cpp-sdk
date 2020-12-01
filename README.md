@@ -33,7 +33,7 @@ load("@proxy_wasm_cpp_sdk//bazel/dep:deps_extra.bzl", "wasm_dependencies_extra")
 wasm_dependencies_extra()
 ```
 
-Source file (`my_plugin.cc`):
+Source file (`myplugin.cc`):
 
 ```
 #include <string>
@@ -66,9 +66,9 @@ void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
 load("@proxy_wasm_cpp_sdk//bazel/wasm:wasm.bzl", "wasm_cc_binary")
 
 wasm_cc_binary(
-    name = "my_plugin.wasm",
+    name = "myplugin.wasm",
     srcs = [
-        "my_plugin.cc",
+        "myplugin.cc",
     ],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
@@ -98,10 +98,10 @@ sudo apt-get install gcc curl python3
 Then run the following Bazel command:
 
 ```
-bazel build //:my_plugin.wasm
+bazel build //:myplugin.wasm
 ```
 
-After the command finishes, you should be able to find `my_plugin.wasm` file under `./bazel-bin` folder.
+After the command finishes, you should be able to find `myplugin.wasm` file under `./bazel-bin` folder.
 
 ### Compiling with the Docker build image
 
@@ -124,10 +124,10 @@ docker run \
 -w /work \
 wasmsdk \
 /bin/bash -lc \
-'bazel build //:my_plugin.wasm && cp bazel-bin/my_plugin.wasm my_plugin.wasm && bazel clean --expunge'
+'bazel build //:myplugin.wasm && cp bazel-bin/myplugin.wasm myplugin.wasm && bazel clean --expunge'
 ```
 
-After the command finishes, you should be able to find `my_plugin.wasm` file along with source files.
+After the command finishes, you should be able to find `myplugin.wasm` file along with source files.
 
 [build-badge]: https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/workflows/C++/badge.svg?branch=master
 [build-link]: https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/actions?query=workflow%3AC%2B%2B+branch%3Amaster
