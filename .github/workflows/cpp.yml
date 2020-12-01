@@ -20,11 +20,13 @@ on:
     branches:
     - master
     - 'envoy-release/**'
+    - 'istio-release/**'
 
   push:
     branches:
     - master
     - 'envoy-release/**'
+    - 'istio-release/**'
 
 jobs:
 
