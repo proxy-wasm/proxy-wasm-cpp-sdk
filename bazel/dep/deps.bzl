@@ -19,11 +19,11 @@ def wasm_dependencies():
         name = "emscripten_toolchain",
         build_file = "@proxy_wasm_cpp_sdk//:emscripten-toolchain.BUILD",
         patch_cmds = [
-            "./emsdk install 1.39.19-upstream",
-            "./emsdk activate --embedded 1.39.19-upstream",
+            "./emsdk install 1.39.6-upstream",
+            "./emsdk activate --embedded 1.39.6-upstream",
         ],
-        strip_prefix = "emsdk-dec8a63594753fe5f4ad3b47850bf64d66c14a4e",
-        url = "https://github.com/emscripten-core/emsdk/archive/dec8a63594753fe5f4ad3b47850bf64d66c14a4e.tar.gz",
+        strip_prefix = "emsdk-1.39.6",
+        url = "https://github.com/emscripten-core/emsdk/archive/1.39.6.tar.gz",
     )
 
     # required by com_google_protobuf
