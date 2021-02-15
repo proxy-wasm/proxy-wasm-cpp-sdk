@@ -73,7 +73,7 @@ public:
 
 /**
  * Print log at different log levels.
- * Instead of using these log function, it is recommended to use LOG_* 
+ * Instead of using these log function, it is recommended to use LOG_*
  * macros below instead since it provides attach more information to
  * the log message
  */
@@ -312,11 +312,11 @@ protected:
  * When making a stream gRPC call, a gRPC stream handler needs to
  * be created, and pass into root context grpcStreamHandler method,
  * and root context will take ownership of the stream handler.
- * 
+ *
  * auto stream_handler = std::make_unique<GrpcStreamHandler>();
  * // root context takes ownerhsip
  * root_context->GrpcStreamHandler(..., stream_handler);
- * 
+ *
  */
 template <typename Request, typename Response>
 class GrpcStreamHandler : public GrpcStreamHandlerBase {
@@ -382,7 +382,7 @@ private:
 };
 
 /**
- * RootContext is a unique context for each root_id for a use-case (e.g. filter) 
+ * RootContext is a unique context for each root_id for a use-case (e.g. filter)
  * compiled into the module. It has the same life time as the VM. Root context is
  * typically used for any host interactions that could outlive stream context, such
  * as HTTP/gRPC calls and timer.
@@ -584,7 +584,7 @@ ContextBase *getContextBase(uint32_t context_id);
 /**
  * RootFactory and ContextFactory are used to register a root context or stream context.
  * After creating the context classes, they can be registered as the follow:
- * 
+ *
  * static RegisterContextFactory registerYourContext(
  *   CONTEXT_FACTORY(YourStreamContext),
  *   ROOT_FACTORY(YourRootContext));
@@ -680,17 +680,17 @@ template <typename S> inline std::optional<WasmDataPtr> getProperty(const std::v
  * Durations are represented as int64 nanoseconds.
  * Timestamps are represented as int64 Unix nanoseconds.
  * Strings and bytes are represented as std::string.
- * 
+ *
  * e.g. to get an integer property:
- * 
+ *
  * int a;
  * getValue({"your", "property", "path"}, &a);
- * 
+ *
  * to get a string property:
- * 
+ *
  * std::string b;
  * getValue({"your", "property", "path"}, "b");
- * 
+ *
  * if no value is found, false will be returned.
  */
 template <typename T>
@@ -825,7 +825,7 @@ inline WasmDataPtr getSharedDataValue(std::string_view key, uint32_t *cas = null
 
 /**
  * SharedQueue is a queue which could be used to pass abitrary message between VMs.
- * A shared queue needs to be registered by a VM. Registering the same queue_name 
+ * A shared queue needs to be registered by a VM. Registering the same queue_name
  * will overwrite the old registration while preseving any pending data. To enqueue
  * and dequeue a shared queue, a VM needs to resolve and get queue token first.
  */
@@ -1026,10 +1026,10 @@ inline WasmResult getResponseTrailerSize(size_t *size) {
  * Get and set various kind of buffer data, including HTTP request/response body,
  * network data, plugin and VM configuration etc. For example, to get Plugin
  * configuration:
- * 
+ *
  * auto configuration_data = getBufferBytes(WasmBufferType::PluginConfiguration,
  *                                          0, configuration_size);
- * 
+ *
  * Similar to HTTP header and trailer API, different types of buffer data can only
  * be accessed at the corresponding event callbacks. For example, Plugin configuration
  * can only be fetched when onConfigure is triggered.
