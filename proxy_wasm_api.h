@@ -38,9 +38,6 @@
     }                                                                                              \
   } while (0)
 
-//
-// High Level C++ API.
-//
 class ContextBase;
 class RootContext;
 class Context;
@@ -54,6 +51,32 @@ public:
 };
 #endif
 
+/**
+ * High level C++ API, includes the following categories:
+ * Logging API: print log at host.
+ * Data API: represent buffered data copied between the host and the Wasm VM.
+ * Context API: represent runtime root context and stream context.
+                Root context also includes API for gRPC call and http call.
+ * gRPC Hanlde API: represent a gRPC callout.
+ * Property API: get and set any host owned property, e.g. various
+                 kind of metadata.
+ * L7 Stream Control API: control L7 stream (stop/continue/reply/route).
+ * Header API: set and get L7 request/response triailer and header.
+ * Buffer API: get and set various kinds of buffered data,
+               such as network/L4 data, request body, configuration.
+ * Stats API: record metrics at host.
+*/
+
+/***********************
+      Logging API
+************************/
+
+/**
+ * Print log at different log levels.
+ * Instead of using these log function, it is recommended to use LOG_* 
+ * macros below instead since it provides attach more information to
+ * the log message
+ */
 inline WasmResult logTrace(std::string_view logMessage) {
   return proxy_log(LogLevel::trace, logMessage.data(), logMessage.size());
 }
@@ -77,6 +100,10 @@ inline void logAbort(std::string_view logMessag) {
   abort();
 }
 
+/**
+ * Log macros, which concat file name, line number, and function name
+ * with the log message.
+ */
 #define LOG(_level, ...)                                                                           \
   log##_level(std::string("[") + __FILE__ + ":" + std::to_string(__LINE__) +                       \
               "]::" + __FUNCTION__ + "() " + __VA_ARGS__)
@@ -87,7 +114,16 @@ inline void logAbort(std::string_view logMessag) {
 #define LOG_ERROR(...) LOG(Error, __VA_ARGS__)
 #define LOG_CRITICAL(...) LOG(Critical, __VA_ARGS__)
 
-// Buffers coming into the WASM filter.
+/***********************
+      Data API
+************************/
+
+/**
+ * WasmData represents data blob copied between the host env and the Wasm VM.
+ * WasmData does not own the underlying data. The data is owned by
+ * the host. WasmData only holds a pointer and size of the data blob,
+ * and provides various helper methods to handle the Wasm data.
+ */
 class WasmData {
 public:
   WasmData(const char *data, size_t size) : data_(data), size_(size) {}
@@ -193,6 +229,15 @@ struct Tuple3Hash {
 
 using HeaderStringPairs = std::vector<std::pair<std::string, std::string>>;
 
+/***********************
+    gRPC Handle API
+************************/
+
+/**
+ * GrpcCallHandlerBase is the base class for gRPC unary call handler.
+ * This class should not be used directly, instead GrpcCallHandler should
+ * be used.
+ */
 class GrpcCallHandlerBase {
 public:
   GrpcCallHandlerBase() {}
@@ -213,6 +258,11 @@ private:
   uint32_t token_;
 };
 
+/**
+ * GrpcCallHandler is a gRPC unary call handler. Mostly GrpcSimpleCall in RootContext
+ * is good enough for unary gRPC call. GrpcCallHandler will only be needed if the gRPC
+ * call potentially needs to be cancelled.
+ */
 template <typename Message> class GrpcCallHandler : public GrpcCallHandlerBase {
 public:
   GrpcCallHandler() : GrpcCallHandlerBase() {}
@@ -221,6 +271,11 @@ public:
   virtual void onSuccess(size_t body_size) = 0;
 };
 
+/**
+ * GrpcCallHandlerBase is the base class for gRPC stream call handler.
+ * This class should not be used directly, instead GrpcStreamHandler should
+ * be used.
+ */
 class GrpcStreamHandlerBase {
 public:
   GrpcStreamHandlerBase() {}
@@ -252,6 +307,17 @@ protected:
   uint32_t token_;
 };
 
+/**
+ * GrpcStreamHandler is a gRPC stream call handler.
+ * When making a stream gRPC call, a gRPC stream handler needs to
+ * be created, and pass into root context grpcStreamHandler method,
+ * and root context will take ownership of the stream handler.
+ * 
+ * auto stream_handler = std::make_unique<GrpcStreamHandler>();
+ * // root context takes ownerhsip
+ * root_context->GrpcStreamHandler(..., stream_handler);
+ * 
+ */
 template <typename Request, typename Response>
 class GrpcStreamHandler : public GrpcStreamHandlerBase {
 public:
@@ -271,7 +337,15 @@ public:
   virtual void onReceive(size_t body_size) = 0;
 };
 
-// Behavior supported by all contexts.
+/***********************
+     Context API
+************************/
+
+/**
+ * ContextBase is the base class for any plugin runtime context class.
+ * ContextBase should not be used directly, instead RootContext and
+ * Context class should be used.
+ */
 class ContextBase {
 public:
   explicit ContextBase(uint32_t id) : id_(id) {}
@@ -307,8 +381,14 @@ private:
   uint32_t id_;
 };
 
-// A context unique for each root_id for a use-case (e.g. filter) compiled into
-// module.
+/**
+ * RootContext is a unique context for each root_id for a use-case (e.g. filter) 
+ * compiled into the module. It has the same life time as the VM. Root context is
+ * typically used for any host interactions that could outlive stream context, such
+ * as HTTP/gRPC calls and timer.
+ * When writing a Wasm plugin, a root context class must be created, which inherits
+ * this RootContext class.
+ */
 class RootContext : public ContextBase {
 public:
   RootContext(uint32_t id, std::string_view root_id) : ContextBase(id), root_id_(root_id) {}
@@ -436,8 +516,11 @@ private:
 
 RootContext *getRoot(std::string_view root_id);
 
-// Context for a stream. The distinguished context id == 0 is used for
-// non-stream calls.
+/**
+ * Context is a stream context. It could represent a L4/L7 stream and has
+ * the same lifecycle as the stream. When implementing a stream plugin,
+ * a context class needs to be created, which inherits this Context class.
+ */
 class Context : public ContextBase {
 public:
   Context(uint32_t id, RootContext *root) : ContextBase(id), root_(root) {}
@@ -498,6 +581,14 @@ Context *getContext(uint32_t context_id);
 RootContext *getRootContext(uint32_t context_id);
 ContextBase *getContextBase(uint32_t context_id);
 
+/**
+ * RootFactory and ContextFactory are used to register a root context or stream context.
+ * After creating the context classes, they can be registered as the follow:
+ * 
+ * static RegisterContextFactory registerYourContext(
+ *   CONTEXT_FACTORY(YourStreamContext),
+ *   ROOT_FACTORY(YourRootContext));
+ */
 using RootFactory =
     std::function<std::unique_ptr<RootContext>(uint32_t id, std::string_view root_id)>;
 using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext *root)>;
@@ -512,9 +603,6 @@ using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootC
     return std::make_unique<_c>(id, root);                                                         \
   }
 
-// Register Context factory.
-// e.g. static RegisterContextFactory
-// register_MyContext(CONTEXT_FACTORY(MyContext));
 struct RegisterContextFactory {
   RegisterContextFactory(ContextFactory context_factory, RootFactory root_factory,
                          std::string_view root_id = "");
@@ -532,7 +620,10 @@ inline std::pair<uint32_t, WasmDataPtr> getStatus() {
   return std::make_pair(code, std::make_unique<WasmData>(value_ptr, value_size));
 }
 
-// Generic selector
+/************************
+      Property API
+*************************/
+
 inline std::optional<WasmDataPtr>
 getProperty(const std::initializer_list<std::string_view> &parts) {
   size_t size = 0;
@@ -584,10 +675,24 @@ template <typename S> inline std::optional<WasmDataPtr> getProperty(const std::v
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-// Generic property reader for basic types: int64, uint64, double, bool
-// Durations are represented as int64 nanoseconds.
-// Timestamps are represented as int64 Unix nanoseconds.
-// Strings and bytes are represented as std::string.
+/**
+ * Generic property reader for basic types: int64, uint64, double, bool
+ * Durations are represented as int64 nanoseconds.
+ * Timestamps are represented as int64 Unix nanoseconds.
+ * Strings and bytes are represented as std::string.
+ * 
+ * e.g. to get an integer property:
+ * 
+ * int a;
+ * getValue({"your", "property", "path"}, &a);
+ * 
+ * to get a string property:
+ * 
+ * std::string b;
+ * getValue({"your", "property", "path"}, "b");
+ * 
+ * if no value is found, false will be returned.
+ */
 template <typename T>
 inline bool getValue(const std::initializer_list<std::string_view> &parts, T *out) {
   auto buf = getProperty(parts);
@@ -641,7 +746,10 @@ inline bool getValue<std::string_view, std::string>(const std::vector<std::strin
   return true;
 }
 
-// Specialization for message types (including struct value for lists and maps)
+/**
+ * getMessageValue is specializated getter for message types,
+ * including struct value for lists and maps.
+ */
 template <typename T>
 inline bool getMessageValue(const std::initializer_list<std::string_view> &parts, T *value_ptr) {
   auto buf = getProperty(parts);
@@ -677,28 +785,17 @@ inline WasmResult setFilterStateStringValue(std::string_view key, std::string_vi
   return setFilterState(key, s);
 }
 
-// Continue/Respond/Route
-inline WasmResult continueRequest() { return proxy_continue_stream(WasmStreamType::Request); }
-inline WasmResult continueResponse() { return proxy_continue_stream(WasmStreamType::Response); }
+/************************
+  Shared Data API
+*************************/
 
-inline WasmResult closeRequest() { return proxy_close_stream(WasmStreamType::Request); }
-inline WasmResult closeResponse() { return proxy_close_stream(WasmStreamType::Response); }
-
-inline WasmResult sendLocalResponse(uint32_t response_code, std::string_view response_code_details,
-                                    std::string_view body,
-                                    const HeaderStringPairs &additional_response_headers,
-                                    GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
-  const char *ptr = nullptr;
-  size_t size = 0;
-  exportPairs(additional_response_headers, &ptr, &size);
-  WasmResult result = proxy_send_local_response(
-      response_code, response_code_details.data(), response_code_details.size(), body.data(),
-      body.size(), ptr, size, static_cast<uint32_t>(grpc_status));
-  ::free(const_cast<char *>(ptr));
-  return result;
-}
-
-// SharedData
+/**
+ * Get and set global shared data. The data is shared by all VMs running in a proxy process.
+ * Get and set operation will lock the shared map. cas (compare-and-swap) arg can be used to
+ * perform atomic operation.
+ * Possible return value of getSharedData is OK and NotFound.
+ * Possible return value of setSharedData is Ok and CasMismatch.
+ */
 inline WasmResult getSharedData(std::string_view key, WasmDataPtr *value, uint32_t *cas = nullptr) {
   uint32_t dummy_cas;
   const char *value_ptr = nullptr;
@@ -726,7 +823,12 @@ inline WasmDataPtr getSharedDataValue(std::string_view key, uint32_t *cas = null
   return data;
 }
 
-// SharedQueue
+/**
+ * SharedQueue is a queue which could be used to pass abitrary message between VMs.
+ * A shared queue needs to be registered by a VM. Registering the same queue_name 
+ * will overwrite the old registration while preseving any pending data. To enqueue
+ * and dequeue a shared queue, a VM needs to resolve and get queue token first.
+ */
 inline WasmResult registerSharedQueue(std::string_view queue_name, uint32_t *token) {
   return proxy_register_shared_queue(queue_name.data(), queue_name.size(), token);
 }
@@ -749,7 +851,44 @@ inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr *data) {
   return result;
 }
 
-// Headers/Trailers
+/*************************
+    L7 Request API
+**************************/
+
+/**
+ * Controls L7 request stream.
+ * continueRequest and continueResponse will continue the request/response if StopIteration
+ * is returned formerly at stream events.
+ * closeRequest and closeResponse will close the stream.
+ * sendLocalResponse will send a local response. After sendLocalResponse is called, StopIteration
+ * should also be returned during stream events.
+ */
+inline WasmResult continueRequest() { return proxy_continue_stream(WasmStreamType::Request); }
+inline WasmResult continueResponse() { return proxy_continue_stream(WasmStreamType::Response); }
+
+inline WasmResult closeRequest() { return proxy_close_stream(WasmStreamType::Request); }
+inline WasmResult closeResponse() { return proxy_close_stream(WasmStreamType::Response); }
+
+inline WasmResult sendLocalResponse(uint32_t response_code, std::string_view response_code_details,
+                                    std::string_view body,
+                                    const HeaderStringPairs &additional_response_headers,
+                                    GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
+  const char *ptr = nullptr;
+  size_t size = 0;
+  exportPairs(additional_response_headers, &ptr, &size);
+  WasmResult result = proxy_send_local_response(
+      response_code, response_code_details.data(), response_code_details.size(), body.data(),
+      body.size(), ptr, size, static_cast<uint32_t>(grpc_status));
+  ::free(const_cast<char *>(ptr));
+  return result;
+}
+
+/**
+ * Header and trailer map accessors.
+ * Note different types of header and trailer could only be accessed on the corresponding
+ * stream events. For example, {add,get,replace,remove}RequestHeader will only work when
+ * onRequestHeader event is triggered at stream context.
+ */
 inline WasmResult addHeaderMapValue(WasmHeaderMapType type, std::string_view key,
                                     std::string_view value) {
   return proxy_add_header_map_value(type, key.data(), key.size(), value.data(), value.size());
@@ -879,7 +1018,22 @@ inline WasmResult getResponseTrailerSize(size_t *size) {
   return getHeaderMapSize(WasmHeaderMapType::ResponseTrailers, size);
 }
 
-// Buffer
+/************************
+   Buffer Data API
+*************************/
+
+/**
+ * Get and set various kind of buffer data, including HTTP request/response body,
+ * network data, plugin and VM configuration etc. For example, to get Plugin
+ * configuration:
+ * 
+ * auto configuration_data = getBufferBytes(WasmBufferType::PluginConfiguration,
+ *                                          0, configuration_size);
+ * 
+ * Similar to HTTP header and trailer API, different types of buffer data can only
+ * be accessed at the corresponding event callbacks. For example, Plugin configuration
+ * can only be fetched when onConfigure is triggered.
+ */
 inline WasmDataPtr getBufferBytes(WasmBufferType type, size_t start, size_t length) {
   const char *ptr = nullptr;
   size_t size = 0;
@@ -970,7 +1124,9 @@ inline WasmResult getMetric(uint32_t metric_id, uint64_t *value) {
   return proxy_get_metric(metric_id, value);
 }
 
-// Higher level metrics interface.
+/************************
+      Stats API
+*************************/
 
 struct MetricTag {
   enum class TagType : uint32_t {
