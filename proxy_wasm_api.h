@@ -57,14 +57,14 @@ public:
  * Data API: represent buffered data copied between the host and the Wasm VM.
  * Context API: represent runtime root context and stream context.
                 Root context also includes API for gRPC call and http call.
- * gRPC Hanlde API: represent a gRPC callout.
+ * gRPC Callout API: represent a gRPC callout.
  * Property API: get and set any host owned property, e.g. various
                  kind of metadata.
- * L7 Stream Control API: control L7 stream (stop/continue/reply/route).
- * Header API: set and get L7 request/response triailer and header.
+ * HTTP request API: control HTTP request stream (stop/continue/reply/route).
+ * Header API: set and get HTTP request/response triailer and header.
  * Buffer API: get and set various kinds of buffered data,
                such as network/L4 data, request body, configuration.
- * Stats API: record metrics at host.
+ * Metrics API: record metrics at host.
 */
 
 /***********************
@@ -230,14 +230,9 @@ struct Tuple3Hash {
 using HeaderStringPairs = std::vector<std::pair<std::string, std::string>>;
 
 /***********************
-    gRPC Handle API
+    gRPC Callout API
 ************************/
 
-/**
- * GrpcCallHandlerBase is the base class for gRPC unary call handler.
- * This class should not be used directly, instead GrpcCallHandler should
- * be used.
- */
 class GrpcCallHandlerBase {
 public:
   GrpcCallHandlerBase() {}
@@ -271,11 +266,6 @@ public:
   virtual void onSuccess(size_t body_size) = 0;
 };
 
-/**
- * GrpcCallHandlerBase is the base class for gRPC stream call handler.
- * This class should not be used directly, instead GrpcStreamHandler should
- * be used.
- */
 class GrpcStreamHandlerBase {
 public:
   GrpcStreamHandlerBase() {}
@@ -341,11 +331,6 @@ public:
      Context API
 ************************/
 
-/**
- * ContextBase is the base class for any plugin runtime context class.
- * ContextBase should not be used directly, instead RootContext and
- * Context class should be used.
- */
 class ContextBase {
 public:
   explicit ContextBase(uint32_t id) : id_(id) {}
@@ -790,7 +775,7 @@ inline WasmResult setFilterStateStringValue(std::string_view key, std::string_vi
 *************************/
 
 /**
- * Get and set global shared data. The data is shared by all VMs running in a proxy process.
+ * Get and set global shared data. The data is shared by all VMs with the same vm_id.
  * Get and set operation will lock the shared map. cas (compare-and-swap) arg can be used to
  * perform atomic operation.
  * Possible return value of getSharedData is OK and NotFound.
@@ -852,11 +837,11 @@ inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr *data) {
 }
 
 /*************************
-    L7 Request API
+        HTTP API
 **************************/
 
 /**
- * Controls L7 request stream.
+ * Controls HTTP request stream.
  * continueRequest and continueResponse will continue the request/response if StopIteration
  * is returned formerly at stream events.
  * closeRequest and closeResponse will close the stream.
@@ -1125,7 +1110,7 @@ inline WasmResult getMetric(uint32_t metric_id, uint64_t *value) {
 }
 
 /************************
-      Stats API
+      Metrics API
 *************************/
 
 struct MetricTag {
