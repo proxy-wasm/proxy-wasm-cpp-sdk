@@ -56,8 +56,9 @@ public:
  * Logging API: print log at host.
  * Data API: represent buffered data copied between the host and the Wasm VM.
  * Context API: represent runtime root context and stream context.
-                Root context also includes API for gRPC call and http call.
+                Root context also includes API for gRPC callout and http callout.
  * gRPC Callout API: represent a gRPC callout.
+ * HTTP Callout API: make HTTP callout. It is part of root context API.
  * Property API: get and set any host owned property, e.g. various
                  kind of metadata.
  * HTTP request API: control HTTP request stream (stop/continue/reply/route).
@@ -120,8 +121,7 @@ inline void logAbort(std::string_view logMessag) {
 
 /**
  * WasmData represents data blob copied between the host env and the Wasm VM.
- * WasmData does not own the underlying data. The data is owned by
- * the host. WasmData only holds a pointer and size of the data blob,
+ * WasmData owns the underlying data. It holds a pointer and size of the data blob,
  * and provides various helper methods to handle the Wasm data.
  */
 class WasmData {
