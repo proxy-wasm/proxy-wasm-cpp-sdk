@@ -678,6 +678,12 @@ inline WasmResult setFilterStateStringValue(std::string_view key, std::string_vi
 }
 
 // Continue/Respond/Route
+inline WasmResult continueDownstream() { return proxy_continue_stream(WasmStreamType::Downstream); }
+inline WasmResult continueUpstream() { return proxy_continue_stream(WasmStreamType::Upstream); }
+
+inline WasmResult closeDownstream() { return proxy_close_stream(WasmStreamType::Downstream); }
+inline WasmResult closeUpstream() { return proxy_close_stream(WasmStreamType::Upstream); }
+
 inline WasmResult continueRequest() { return proxy_continue_stream(WasmStreamType::Request); }
 inline WasmResult continueResponse() { return proxy_continue_stream(WasmStreamType::Response); }
 
