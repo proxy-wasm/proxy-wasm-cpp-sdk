@@ -31,7 +31,7 @@ include ${PROXY_WASM_CPP_SDK}/Makefile.base_lite
 
 Source file (myproject.cc):
 
-```
+```c++
 #include <string>
 #include <unordered_map>
 
