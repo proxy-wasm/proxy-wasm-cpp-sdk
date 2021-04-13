@@ -11,7 +11,7 @@ A Dockerfile for the C++ SDK is provided in Dockerfile-sdk.
 
 It can built in this directory by:
 
-```
+```bash
 docker build -t wasmsdk:v2 -f Dockerfile-sdk .
 ```
 
@@ -21,7 +21,7 @@ The docker image can be used for compiling wasm files.
 
 Create a directory with your source files and a Makefile:
 
-```
+```makefile
 PROXY_WASM_CPP_SDK=/sdk
 
 all: myproject.wasm
@@ -81,7 +81,7 @@ To use a newer/specific version of the SDK (e.g. from the version of Enovy you a
 
 Here is an example Makefile referencing the SDK at ../envoy/api/wasm/cpp and mounted as 'sdk' in the /work directory:
 
-```
+```makefile
 PROXY_WASM_CPP_SDK=/work/sdk
 
 all: myproject.wasm
@@ -99,7 +99,7 @@ docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasms
 
 Abseil (optionally) is built in /root/abseil and can be used. Note that the abseil containers (e.g. absl::flat\_hash\_set) exercise many syscalls which are not supported. Consequantally individual files should be pulled in which are relatively self contained (e.g. strings). Example customized Makefile:
 
-```
+```makefile
 PROXY_WASM_CPP_SDK=/sdk
 CPP_API:=${PROXY_WASM_CPP_SDK}
 CPP_CONTEXT_LIB = ${CPP_API}/proxy_wasm_intrinsics.cc
@@ -115,7 +115,7 @@ all: plugin.wasm
 
 Precompiled abseil libraries are also available, so the above can also be done as:
 
-```
+```makefile
 PROXY_WASM_CPP_SDK=/sdk
 CPP_API:=${PROXY_WASM_CPP_SDK}
 CPP_CONTEXT_LIB = ${CPP_API}/proxy_wasm_intrinsics.cc
@@ -133,7 +133,7 @@ all: plugin.wasm
 
 The compiled files may be owned by root.  To chown them add the follow lines to the Makefile and docker invocation:
 
-```
+```makefile
 PROXY_WASM_CPP_SDK=/sdk
 
 all: myproject.wasm
