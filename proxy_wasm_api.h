@@ -905,6 +905,14 @@ inline WasmResult setBuffer(WasmBufferType type, size_t start, size_t length, st
   return result;
 }
 
+inline WasmDataPtr getResponseBodyBufferBytes(size_t start, size_t length) {
+  return getBufferBytes(WasmBufferType::HttpResponseBody, start, length);
+}
+
+inline WasmDataPtr getRequestBodyBufferBytes(size_t start, size_t length) {
+  return getBufferBytes(WasmBufferType::HttpRequestBody, start, length);
+}
+
 // HTTP
 
 inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs &headers, void **buffer_ptr,
