@@ -1576,7 +1576,7 @@ inline uint64_t getCurrentTimeNanoseconds() {
 }
 
 inline void setTickPeriodMilliseconds(uint32_t millisecond) {
-  proxy_set_tick_period_milliseconds(millisecond); 
+  proxy_set_tick_period_milliseconds(millisecond);
 }
 
 inline void RootContext::done() { proxy_done(); }
