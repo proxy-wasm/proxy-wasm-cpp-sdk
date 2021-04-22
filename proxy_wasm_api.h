@@ -906,11 +906,11 @@ inline WasmResult setBuffer(WasmBufferType type, size_t start, size_t length, st
 }
 
 inline WasmDataPtr getResponseBodyBufferBytes(size_t start, size_t length){
-  return getBufferBytes(WasmBufferType::HttpResponseBody,start,length);
+  return getBufferBytes(WasmBufferType::HttpResponseBody, start, length);
 }
 
 inline WasmDataPtr getRequestBodyBufferBytes(size_t start, size_t length){
-  return getBufferBytes(WasmBufferType::HttpRequestBody,start,length);
+  return getBufferBytes(WasmBufferType::HttpRequestBody, start, length);
 }
 
 // HTTP
