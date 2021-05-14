@@ -1341,9 +1341,12 @@ inline WasmResult grpcCall(std::string_view service, std::string_view service_na
   void *metadata_ptr = nullptr;
   size_t metadata_size = 0;
   MakeHeaderStringPairsBuffer(initial_metadata, &metadata_ptr, &metadata_size);
-  return proxy_grpc_call(service.data(), service.size(), service_name.data(), service_name.size(),
-                         method_name.data(), method_name.size(), metadata_ptr, metadata_size,
-                         request.data(), request.size(), timeout_milliseconds, token_ptr);
+  WasmResult result =
+      proxy_grpc_call(service.data(), service.size(), service_name.data(), service_name.size(),
+                      method_name.data(), method_name.size(), metadata_ptr, metadata_size,
+                      request.data(), request.size(), timeout_milliseconds, token_ptr);
+  ::free(metadata_ptr);
+  return result;
 }
 
 #ifdef PROXY_WASM_PROTOBUF
@@ -1366,9 +1369,11 @@ inline WasmResult grpcStream(std::string_view service, std::string_view service_
   void *metadata_ptr = nullptr;
   size_t metadata_size = 0;
   MakeHeaderStringPairsBuffer(initial_metadata, &metadata_ptr, &metadata_size);
-  return proxy_grpc_stream(service.data(), service.size(), service_name.data(), service_name.size(),
-                           method_name.data(), method_name.size(), metadata_ptr, metadata_size,
-                           token_ptr);
+  WasmResult result = proxy_grpc_stream(service.data(), service.size(), service_name.data(),
+                                        service_name.size(), method_name.data(), method_name.size(),
+                                        metadata_ptr, metadata_size, token_ptr);
+  ::free(metadata_ptr);
+  return result;
 }
 
 inline WasmResult grpcCancel(uint32_t token) { return proxy_grpc_cancel(token); }
