@@ -30,6 +30,10 @@
 #include <utility>
 #include <vector>
 
+#include "proxy_wasm_common.h"
+#include "proxy_wasm_enums.h"
+#include "proxy_wasm_externs.h"
+
 #define CHECK_RESULT(_c)                                                                           \
   do {                                                                                             \
     if ((_c) != WasmResult::Ok) {                                                                  \

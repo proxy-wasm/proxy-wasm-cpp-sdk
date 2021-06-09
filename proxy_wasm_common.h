@@ -21,6 +21,7 @@
 // NOLINT(namespace-envoy)
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 enum class WasmResult : uint32_t {
