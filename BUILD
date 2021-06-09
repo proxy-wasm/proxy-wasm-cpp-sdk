@@ -10,6 +10,9 @@ cc_library(
         "proxy_wasm_api.h",
         "proxy_wasm_externs.h",
     ],
+    deps = [
+        ":common_lib",
+    ],
 )
 
 cc_library(

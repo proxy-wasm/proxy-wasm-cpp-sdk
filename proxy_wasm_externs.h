@@ -24,6 +24,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "proxy_wasm_common.h"
+#include "proxy_wasm_enums.h"
+
 //
 // ABI
 //

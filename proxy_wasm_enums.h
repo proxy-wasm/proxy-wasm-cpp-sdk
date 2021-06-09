@@ -21,6 +21,8 @@
 // NOLINT(namespace-envoy)
 #pragma once
 
+#include <cstdint>
+
 enum class LogLevel : int32_t { trace, debug, info, warn, error, critical, Max = critical };
 enum class FilterStatus : int32_t { Continue = 0, StopIteration = 1 };
 enum class FilterHeadersStatus : int32_t {
