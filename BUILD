@@ -10,7 +10,7 @@ cc_library(
     ],
     deps = [
         ":common_lib",
-    ]
+    ],
 )
 
 cc_library(
