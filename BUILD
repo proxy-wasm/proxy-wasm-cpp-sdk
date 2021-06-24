@@ -1,3 +1,6 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
 licenses(["notice"])  # Apache 2
 
 package(default_visibility = ["//visibility:public"])
@@ -12,6 +15,7 @@ cc_library(
     ],
     deps = [
         ":common_lib",
+        "@com_google_protobuf//:protobuf_lite",
     ],
 )
 
@@ -63,7 +67,7 @@ cc_library(
     deps = [
         ":proxy_wasm_intrinsics",
         ":proxy_wasm_intrinsics_lite_cc_proto",
-        "@com_google_protobuf//:protobuf",
+        "@com_google_protobuf//:protobuf_lite",
     ],
 )
 
