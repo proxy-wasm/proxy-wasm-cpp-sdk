@@ -21,6 +21,10 @@
 // NOLINT(namespace-envoy)
 #pragma once
 
+#ifdef PROXY_WASM_PROTOBUF
+#include "google/protobuf/message_lite.h"
+#endif
+
 #include <cstring>
 #include <functional>
 #include <memory>

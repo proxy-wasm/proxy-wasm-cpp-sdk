@@ -12,11 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 # Wasm deps that rely on a first stage of dependency loading in wasm_dependencies().
 def wasm_dependencies_extra():
-    bazel_skylib_workspace()
-    rules_proto_dependencies()
-    rules_proto_toolchains()
+    protobuf_deps()
