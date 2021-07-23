@@ -31,13 +31,6 @@ export CC=gcc-7
 export CXX=g++-7
 export CPP=cpp-7
 
-# goland
-
-wget https://golang.org/dl/go1.16.6.linux-amd64.tar.gz 
-rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.6.linux-amd64.tar.gz
-rm -rf go1.16.6.linux-amd64.tar.gz
-export PATH=$PATH:/usr/local/go/bin
-
 # bazel
 wget https://github.com/bazelbuild/bazelisk/releases/download/v1.10.1/bazelisk-linux-amd64
 chmod +x bazelisk-linux-amd64
