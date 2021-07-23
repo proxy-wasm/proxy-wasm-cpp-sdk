@@ -34,9 +34,7 @@ export CPP=cpp-7
 # bazel
 wget https://github.com/bazelbuild/bazelisk/releases/download/v1.10.1/bazelisk-linux-amd64
 chmod +x bazelisk-linux-amd64
-mv bazelisk-linux-amd64 /usr/local/bin/bazelisk
-
-ln -s /usr/local/bin/bazelisk /usr/local/bin/bazel
+mv bazelisk-linux-amd64 /usr/local/bin/bazel
 
 # get $HOME
 cd
