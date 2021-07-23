@@ -6,4 +6,5 @@ COPY *.cc *.h *.js *.proto Makefile* *.a /sdk/
 
 RUN ./sdk_container.sh
 
-ENV PATH="${PATH}:/usr/local/go/bin:/root/go/bin"
+ENV PATH="${PATH}:/usr/local/go/bin:/root/go/bin" \
+    TEST_TMPDIR=/tmp
