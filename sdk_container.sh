@@ -39,8 +39,11 @@ rm -rf go1.16.6.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 
 # bazel
-go get github.com/bazelbuild/bazelisk
-ln -s /root/go/bin/bazelisk /root/go/bin/bazel
+wget https://github.com/bazelbuild/bazelisk/releases/download/v1.10.1/bazelisk-linux-amd64
+chmod +x bazelisk-linux-amd64
+mv bazelisk-linux-amd64 /usr/local/bin/bazelisk
+
+ln -s /usr/local/bin/bazelisk /usr/local/bin/bazel
 
 # get $HOME
 cd
