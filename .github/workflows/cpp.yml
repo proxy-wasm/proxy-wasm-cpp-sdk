@@ -35,6 +35,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '^1.16'
 
     - name: Format (clang-format)
       run: |
@@ -44,13 +47,13 @@ jobs:
 
     - name: Format (buildifier)
       run: |
-        go get -u github.com/bazelbuild/buildtools/buildifier
+        go install github.com/bazelbuild/buildtools/buildifier@latest
         export PATH=$PATH:$(go env GOPATH)/bin
         find . -name "BUILD" | xargs -n1 buildifier -mode=check
 
     - name: Format (addlicense)
       run: |
-        go get -u github.com/google/addlicense
+        go install github.com/google/addlicense@latest
         export PATH=$PATH:$(go env GOPATH)/bin
         addlicense -check .
 
