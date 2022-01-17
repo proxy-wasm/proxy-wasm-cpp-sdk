@@ -104,7 +104,7 @@ proto_library(
 )
 
 filegroup(
-    name = "jslib",
+    name = "proxy_wasm_intrinsics_js",
     srcs = [
         "proxy_wasm_intrinsics.js",
     ],
