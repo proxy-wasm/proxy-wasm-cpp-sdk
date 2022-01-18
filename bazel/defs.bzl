@@ -57,4 +57,5 @@ def proxy_wasm_cc_binary(
     wasm_cc_binary(
         name = name,
         cc_target = ":proxy_wasm_" + name.rstrip(".wasm"),
+        tags = tags,
     )
