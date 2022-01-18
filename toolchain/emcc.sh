@@ -18,7 +18,7 @@ set -euo pipefail
 
 . $(dirname $0)/common.sh
 
-emcc --no-entry -s EXPORTED_FUNCTIONS=['_malloc'] "$@"
+emcc "$@"
 
 # clang doesn't support `-no-canonical-system-headers` so sed it
 # find the .d file in the args and fix it:
@@ -27,7 +27,9 @@ for arg in "$@"
 do
     if [ "${arg: -2}" == ".d" ]; then
         echo Fixing $arg
-        sed -e 's%[^ ]*/external/emscripten_toolchain/upstream/emscripten/system/%external/emscripten_toolchain/upstream/emscripten/system/%' $arg > $arg.tmp
+        sed -e 's%[^ ]*/tmp/emscripten_cache/sysroot/include/%external/emscripten_toolchain/upstream/emscripten/cache/sysroot/include/%' $arg > $arg.tmp
+        mv $arg.tmp $arg
+        sed -e 's%[^ ]*/external/emscripten_toolchain/upstream/lib/clang/%external/emscripten_toolchain/upstream/lib/clang/%' $arg > $arg.tmp
         mv $arg.tmp $arg
         # some zlib headers are treated as system headers
         sed -e 's%[^ ]*/external/zlib/%external/zlib/%' $arg > $arg.tmp

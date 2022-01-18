@@ -13,34 +13,26 @@
 #  limitations under the License.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 def wasm_dependencies():
-    _http_archive(
+    maybe(
+        http_archive,
         name = "emscripten_toolchain",
         build_file = "@proxy_wasm_cpp_sdk//:emscripten-toolchain.BUILD",
         patch_cmds = [
-            "./emsdk install 2.0.7",
-            "./emsdk activate --embedded 2.0.7",
+            "./emsdk install 3.1.1",
+            "./emsdk activate --embedded 3.1.1",
         ],
-        strip_prefix = "emsdk-2.0.7",
-        url = "https://github.com/emscripten-core/emsdk/archive/2.0.7.tar.gz",
-        sha256 = "ce7a5c76e8b425aca874cea329fd9ac44b203b777053453b6a37b4496c5ce34f"
+        strip_prefix = "emsdk-3.1.1",
+        url = "https://github.com/emscripten-core/emsdk/archive/3.1.1.tar.gz",
+        sha256 = "3a4893f0bb8203469e1197aa235fc49ed6f5dd2d490e9244a6899a8ad860f3e6"
     )
 
-    _http_archive(
+    maybe(
+        http_archive,
         name = "com_google_protobuf",
         sha256 = "77ad26d3f65222fd96ccc18b055632b0bfedf295cb748b712a98ba1ac0b704b2",
         strip_prefix = "protobuf-3.17.3",
         url = "https://github.com/protocolbuffers/protobuf/releases/download/v3.17.3/protobuf-all-3.17.3.tar.gz",
-    )
-
-def _http_archive(name, **kwargs):
-    existing_rule_keys = native.existing_rules().keys()
-    if name in existing_rule_keys:
-        # This repository has already been defined.
-        return
-
-    http_archive(
-        name = name,
-        **kwargs
     )
