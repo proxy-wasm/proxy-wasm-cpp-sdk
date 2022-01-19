@@ -68,15 +68,32 @@ wasm_cc_binary_rule = rule(
     attrs = _wasm_attrs(wasm_cc_transition),
 )
 
-def wasm_cc_binary(name, tags = [], **kwargs):
+def wasm_cc_binary(**kwargs):
+    fail("`wasm_cc_binary` is deprecated. Please use `proxy_wasm_cc_binary`.")
+
+def proxy_wasm_cc_binary(name, additional_linker_inputs = [], linkopts = [], tags = [], deps = [], **kwargs):
     wasm_name = "_wasm_" + name
     kwargs.setdefault("visibility", ["//visibility:public"])
     cc_binary(
         name = wasm_name,
+        additional_linker_inputs = additional_linker_inputs + [
+            "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js",
+        ],
+        linkopts = linkopts + [
+            "--no-entry",
+            "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
+            "-sSTANDALONE_WASM",
+            "-sEXPORTED_FUNCTIONS=_malloc",
+        ],
         # Adding manual tag it won't be built in non-Wasm (e.g. x86_64 config)
         # when an wildcard is specified, but it will be built in Wasm configuration
         # when the wasm_binary below is built.
-        tags = ["manual"],
+        tags = tags + [
+            "manual",
+        ],
+        deps = deps + [
+            "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
+        ],
         **kwargs
     )
 

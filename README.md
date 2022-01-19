@@ -175,8 +175,8 @@ sudo make install
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 2.0.7
-./emsdk activate 2.0.7
+./emsdk install 3.1.1
+./emsdk activate 3.1.1
 
 source ./emsdk\_env.sh
 ```
@@ -189,7 +189,7 @@ It is possible later versions will work, e.g.
 ./emsdk activate latest
 ```
 
-However 2.0.7 is known to work.
+However 3.1.1 is known to work.
 
 ### Rebuilding the libprotobuf.a files
 
