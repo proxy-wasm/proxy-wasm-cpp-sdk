@@ -68,7 +68,10 @@ wasm_cc_binary_rule = rule(
     attrs = _wasm_attrs(wasm_cc_transition),
 )
 
-def wasm_cc_binary(name, additional_linker_inputs = [], linkopts = [], tags = [], deps = [], **kwargs):
+def wasm_cc_binary(**kwargs):
+    fail("`wasm_cc_binary` is deprecated. Please use `proxy_wasm_cc_binary`.")
+
+def proxy_wasm_cc_binary(name, additional_linker_inputs = [], linkopts = [], tags = [], deps = [], **kwargs):
     wasm_name = "_wasm_" + name
     kwargs.setdefault("visibility", ["//visibility:public"])
     cc_binary(
