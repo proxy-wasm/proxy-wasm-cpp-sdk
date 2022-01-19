@@ -26,7 +26,7 @@ def wasm_dependencies():
         ],
         strip_prefix = "emsdk-3.1.1",
         url = "https://github.com/emscripten-core/emsdk/archive/3.1.1.tar.gz",
-        sha256 = "3a4893f0bb8203469e1197aa235fc49ed6f5dd2d490e9244a6899a8ad860f3e6"
+        sha256 = "3a4893f0bb8203469e1197aa235fc49ed6f5dd2d490e9244a6899a8ad860f3e6",
     )
 
     maybe(

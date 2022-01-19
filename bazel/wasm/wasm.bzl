@@ -88,7 +88,9 @@ def proxy_wasm_cc_binary(name, additional_linker_inputs = [], linkopts = [], tag
         # Adding manual tag it won't be built in non-Wasm (e.g. x86_64 config)
         # when an wildcard is specified, but it will be built in Wasm configuration
         # when the wasm_binary below is built.
-        tags = tags + ["manual"],
+        tags = tags + [
+            "manual",
+        ],
         deps = deps + [
             "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
         ],
