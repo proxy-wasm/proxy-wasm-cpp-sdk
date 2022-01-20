@@ -30,15 +30,9 @@ def proxy_wasm_cc_binary(
         ],
         copts = copts + [
             "-std=c++17",
-        ] + select({
-            "@proxy_wasm_cpp_sdk//bazel:is_opt": [
-                "-fdata-sections",
-                "-ffunction-sections",
-                "-flto",
-                "-O3",
-            ],
-            "//conditions:default": [],
-        }),
+            "-flto",
+            "-O3",
+        ],
         linkopts = linkopts + [
             "--no-entry",
             "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
