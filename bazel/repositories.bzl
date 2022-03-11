@@ -18,11 +18,15 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def proxy_wasm_cpp_host_repositories():
     maybe(
         http_archive,
-        name = "emsdk",
-        sha256 = "19851efd2616a66f9abd84f55f1d094e03252d87b1d78ae0f5d992121d1dd9cc",
-        # v3.1.1 with Bazel fixes
-        strip_prefix = "emsdk-7eecde8afcb89fbdff2597d6cce61a24ae2c34f3/bazel",
-        url = "https://github.com/emscripten-core/emsdk/archive/7eecde8afcb89fbdff2597d6cce61a24ae2c34f3.tar.gz",
+        name = "emscripten_toolchain",
+        build_file = "@proxy_wasm_cpp_sdk//:emscripten-toolchain.BUILD",
+        patch_cmds = [
+            "./emsdk install 3.1.7",
+            "./emsdk activate --embedded 3.1.7",
+        ],
+        strip_prefix = "emsdk-3.1.7",
+        url = "https://github.com/emscripten-core/emsdk/archive/3.1.7.tar.gz",
+        sha256 = "bcceced0b7cad2e08375adf74ef20fa431230abbae8766bdad268c43e34f8d03",
     )
 
     maybe(
