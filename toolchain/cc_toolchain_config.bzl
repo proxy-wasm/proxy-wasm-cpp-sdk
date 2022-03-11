@@ -81,7 +81,7 @@ def _impl(ctx):
                             "-isystem",
                             "external/emscripten_toolchain/upstream/emscripten/cache/sysroot/include/",
                             "-isystem",
-                            "external/emscripten_toolchain/upstream/lib/clang/14.0.0/include/",
+                            "external/emscripten_toolchain/upstream/lib/clang/15.0.0/include/",
                         ],
                     ),
                 ],
@@ -162,7 +162,7 @@ def _impl(ctx):
         # "this rule is missing dependency declarations for the following files included".
         cxx_builtin_include_directories = [
             "external/emscripten_toolchain/upstream/emscripten/cache/sysroot/include/",
-            "external/emscripten_toolchain/upstream/lib/clang/14.0.0/include/",
+            "external/emscripten_toolchain/upstream/lib/clang/15.0.0/include/",
         ],
         features = [cxx17_feature, no_canonical_prefixes_feature, opt_feature],
     )
