@@ -12,8 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load("@emsdk//:emscripten_deps.bzl", emsdk_emscripten_deps = "emscripten_deps")
+load("@emsdk//:emscripten_deps.bzl", "emscripten_deps")
 
 # Requires proxy_wasm_cpp_host_dependencies() to be loaded first.
 def proxy_wasm_cpp_host_dependencies_extra():
-    emsdk_emscripten_deps()
+    emscripten_deps()

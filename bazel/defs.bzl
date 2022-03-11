@@ -68,9 +68,9 @@ _optimized_wasm_cc_binary = rule(
     implementation = _optimized_wasm_cc_binary_impl,
     attrs = {
         "wasm_cc_target": attr.label(
+            doc = "The wasm_cc_binary to extract files from.",
             cfg = _optimized_wasm_cc_binary_transition,
             mandatory = True,
-            doc = "The wasm_cc_binary to extract files from.",
         ),
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
@@ -112,7 +112,7 @@ def proxy_wasm_cc_binary(
     )
 
     wasm_cc_binary(
-        name = "default_" + name,
+        name = "wasm_" + name,
         cc_target = ":proxy_wasm_" + name.rstrip(".wasm"),
         tags = tags + [
             "manual",
@@ -121,6 +121,6 @@ def proxy_wasm_cc_binary(
 
     _optimized_wasm_cc_binary(
         name = name,
-        wasm_cc_target = ":default_" + name,
+        wasm_cc_target = ":wasm_" + name,
         tags = tags,
     )
