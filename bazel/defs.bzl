@@ -15,6 +15,72 @@
 load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
+def _optimized_wasm_cc_binary_transition_impl(settings, attr):
+    copts = list(settings["//command_line_option:copt"])
+    copts.append("-std=c++17")
+    copts.append("-O3")
+    copts.append("-fno-sanitize=all")
+
+    linkopts = list(settings["//command_line_option:linkopt"])
+    linkopts.append("-std=c++17")
+    linkopts.append("-O3")
+    linkopts.append("-fno-sanitize=all")
+
+    # TODO(PiotrSikora): Add LTO when fixed upstream, blocked on
+    # https://github.com/emscripten-core/emsdk/issues/971
+    #copts.append("-flto")
+    #linkopts.append("-flto")
+
+    return {
+        "//command_line_option:copt": copts,
+        "//command_line_option:linkopt": linkopts,
+    }
+
+_optimized_wasm_cc_binary_transition = transition(
+    implementation = _optimized_wasm_cc_binary_transition_impl,
+    inputs = [
+        "//command_line_option:copt",
+        "//command_line_option:linkopt",
+    ],
+    outputs = [
+        "//command_line_option:copt",
+        "//command_line_option:linkopt",
+    ],
+)
+
+def _optimized_wasm_cc_binary_impl(ctx):
+    input_binary = ctx.attr.wasm_cc_target[0][DefaultInfo].files_to_run.executable
+    input_runfiles = ctx.attr.wasm_cc_target[0][DefaultInfo].default_runfiles
+    copied_binary = ctx.actions.declare_file(ctx.attr.name)
+
+    ctx.actions.run(
+        mnemonic = "CopyFile",
+        executable = "cp",
+        arguments = [input_binary.path, copied_binary.path],
+        inputs = [input_binary],
+        outputs = [copied_binary],
+    )
+
+    return DefaultInfo(
+        executable = copied_binary,
+        runfiles = input_runfiles,
+    )
+
+_optimized_wasm_cc_binary = rule(
+    implementation = _optimized_wasm_cc_binary_impl,
+    attrs = {
+        "wasm_cc_target": attr.label(
+            cfg = _optimized_wasm_cc_binary_transition,
+            mandatory = True,
+            doc = "The wasm_cc_binary to extract files from.",
+        ),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+    },
+    executable = True,
+)
+
 def proxy_wasm_cc_binary(
         name,
         additional_linker_inputs = [],
@@ -27,11 +93,6 @@ def proxy_wasm_cc_binary(
         name = "proxy_wasm_" + name.rstrip(".wasm"),
         additional_linker_inputs = additional_linker_inputs + [
             "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js",
-        ],
-        copts = copts + [
-            "-std=c++17",
-            "-flto",
-            "-O3",
         ],
         linkopts = linkopts + [
             "--no-entry",
@@ -49,7 +110,15 @@ def proxy_wasm_cc_binary(
     )
 
     wasm_cc_binary(
-        name = name,
+        name = "default_" + name,
         cc_target = ":proxy_wasm_" + name.rstrip(".wasm"),
+        tags = tags + [
+            "manual",
+        ],
+    )
+
+    _optimized_wasm_cc_binary(
+        name = name,
+        wasm_cc_target = ":default_" + name,
         tags = tags,
     )
