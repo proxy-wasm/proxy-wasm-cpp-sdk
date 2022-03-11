@@ -17,12 +17,10 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 def _optimized_wasm_cc_binary_transition_impl(settings, attr):
     copts = list(settings["//command_line_option:copt"])
-    copts.append("-std=c++17")
     copts.append("-O3")
     copts.append("-fno-sanitize=all")
 
     linkopts = list(settings["//command_line_option:linkopt"])
-    linkopts.append("-std=c++17")
     linkopts.append("-O3")
     linkopts.append("-fno-sanitize=all")
 
@@ -84,7 +82,6 @@ _optimized_wasm_cc_binary = rule(
 def proxy_wasm_cc_binary(
         name,
         additional_linker_inputs = [],
-        copts = [],
         linkopts = [],
         tags = [],
         deps = [],
