@@ -85,7 +85,14 @@ def proxy_wasm_cc_binary(
         linkopts = [],
         tags = [],
         deps = [],
+        protobuf = "",
         **kwargs):
+    proxy_wasm_deps = ["@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics"]
+    if protobuf == "lite":
+        proxy_wasm_deps.append("@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite")
+    if protobuf == "full":
+        proxy_wasm_deps.append("@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_full")
+
     cc_binary(
         name = "proxy_wasm_" + name.rstrip(".wasm"),
         additional_linker_inputs = additional_linker_inputs + [
@@ -100,9 +107,7 @@ def proxy_wasm_cc_binary(
         tags = tags + [
             "manual",
         ],
-        deps = deps + [
-            "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
-        ],
+        deps = deps + proxy_wasm_deps,
         **kwargs
     )
 
