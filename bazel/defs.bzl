@@ -22,6 +22,7 @@ def _optimized_wasm_cc_binary_transition_impl(settings, attr):
         "//command_line_option:copt": ["-O3"],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
+        "//command_line_option:collect_code_coverage": False,
     }
 
 _optimized_wasm_cc_binary_transition = transition(
@@ -31,6 +32,7 @@ _optimized_wasm_cc_binary_transition = transition(
         "//command_line_option:copt",
         "//command_line_option:cxxopt",
         "//command_line_option:linkopt",
+        "//command_line_option:collect_code_coverage",
     ],
 )
 
