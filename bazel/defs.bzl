@@ -16,32 +16,20 @@ load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 def _optimized_wasm_cc_binary_transition_impl(settings, attr):
-    copts = list(settings["//command_line_option:copt"])
-    copts.append("-O3")
-    copts.append("-fno-sanitize=all")
-
-    linkopts = list(settings["//command_line_option:linkopt"])
-    linkopts.append("-O3")
-    linkopts.append("-fno-sanitize=all")
-
-    # TODO(PiotrSikora): Add LTO when fixed upstream, blocked on
-    # https://github.com/emscripten-core/emsdk/issues/971
-    #copts.append("-flto")
-    #linkopts.append("-flto")
-
+    # TODO(PiotrSikora): Add -flto to copts/linkopts when fixed in emsdk.
+    # See: https://github.com/emscripten-core/emsdk/issues/971
     return {
-        "//command_line_option:copt": copts,
-        "//command_line_option:linkopt": linkopts,
+        "//command_line_option:copt": ["-O3"],
+        "//command_line_option:cxxopt": [],
+        "//command_line_option:linkopt": [],
     }
 
 _optimized_wasm_cc_binary_transition = transition(
     implementation = _optimized_wasm_cc_binary_transition_impl,
-    inputs = [
-        "//command_line_option:copt",
-        "//command_line_option:linkopt",
-    ],
+    inputs = [],
     outputs = [
         "//command_line_option:copt",
+        "//command_line_option:cxxopt",
         "//command_line_option:linkopt",
     ],
 )
