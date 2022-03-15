@@ -46,7 +46,17 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
                                                       "my_root_id");
 
 bool ExampleRootContext::onStart(size_t) {
+#if defined(PROXY_WASM_PROTOBUF_FULL)
+  LOG_TRACE("onStart with protobuf (full)");
+  google::protobuf::Value value;
+  value.set_string_value("unused");
+#elif defined(PROXY_WASM_PROTOBUF_LITE)
+  LOG_TRACE("onStart with protobuf (lite)");
+  google::protobuf::Value value;
+  value.set_string_value("unused");
+#else
   LOG_TRACE("onStart");
+#endif
   return true;
 }
 

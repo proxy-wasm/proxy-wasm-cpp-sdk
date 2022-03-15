@@ -13,7 +13,9 @@
 #  limitations under the License.
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+load("@emsdk//:deps.bzl", emsdk_deps = "deps")
 
-# Wasm deps that rely on a first stage of dependency loading in wasm_dependencies().
-def wasm_dependencies_extra():
+# Requires proxy_wasm_cpp_host_repositories() to be loaded first.
+def proxy_wasm_cpp_host_dependencies():
     protobuf_deps()
+    emsdk_deps()

@@ -1,9 +1,13 @@
 workspace(name = "proxy_wasm_cpp_sdk")
 
-load("@proxy_wasm_cpp_sdk//bazel/dep:deps.bzl", "wasm_dependencies")
+load("@proxy_wasm_cpp_sdk//bazel:repositories.bzl", "proxy_wasm_cpp_host_repositories")
 
-wasm_dependencies()
+proxy_wasm_cpp_host_repositories()
 
-load("@proxy_wasm_cpp_sdk//bazel/dep:deps_extra.bzl", "wasm_dependencies_extra")
+load("@proxy_wasm_cpp_sdk//bazel:dependencies.bzl", "proxy_wasm_cpp_host_dependencies")
 
-wasm_dependencies_extra()
+proxy_wasm_cpp_host_dependencies()
+
+load("@proxy_wasm_cpp_sdk//bazel:dependencies_extra.bzl", "proxy_wasm_cpp_host_dependencies_extra")
+
+proxy_wasm_cpp_host_dependencies_extra()
