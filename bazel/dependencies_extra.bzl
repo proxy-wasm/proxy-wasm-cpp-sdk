@@ -14,6 +14,6 @@
 
 load("@emsdk//:emscripten_deps.bzl", "emscripten_deps")
 
-# Requires proxy_wasm_cpp_host_dependencies() to be loaded first.
-def proxy_wasm_cpp_host_dependencies_extra():
+# Requires proxy_wasm_cpp_sdk_dependencies() to be loaded first.
+def proxy_wasm_cpp_sdk_dependencies_extra():
     emscripten_deps()

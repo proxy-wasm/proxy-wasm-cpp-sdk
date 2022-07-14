@@ -15,7 +15,7 @@
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 load("@emsdk//:deps.bzl", emsdk_deps = "deps")
 
-# Requires proxy_wasm_cpp_host_repositories() to be loaded first.
-def proxy_wasm_cpp_host_dependencies():
+# Requires proxy_wasm_cpp_sdk_repositories() to be loaded first.
+def proxy_wasm_cpp_sdk_dependencies():
     protobuf_deps()
     emsdk_deps()
