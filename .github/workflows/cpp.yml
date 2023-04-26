@@ -28,6 +28,9 @@ on:
     - 'envoy-release/**'
     - 'istio-release/**'
 
+  schedule:
+    - cron: '0 0 * * *'
+
 jobs:
 
   format:
