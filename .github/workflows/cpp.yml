@@ -41,8 +41,8 @@ jobs:
 
     - name: Format (clang-format)
       run: |
-        sudo apt-get install clang-format-9
-        find . -name "*.h" -o -name "*.cc" -o -name "*.proto" | grep -v ".pb." | xargs -n1 clang-format-9 -i
+        sudo apt-get install clang-format-12
+        find . -name "*.h" -o -name "*.cc" -o -name "*.proto" | grep -v ".pb." | xargs -n1 clang-format-12 -i
         git diff --exit-code
 
     - name: Format (buildifier)
