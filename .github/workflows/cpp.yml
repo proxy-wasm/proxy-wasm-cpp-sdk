@@ -34,7 +34,7 @@ on:
 jobs:
 
   format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -61,7 +61,7 @@ jobs:
         addlicense -ignore="**/BUILD" -check .
 
   protobuf:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -84,7 +84,7 @@ jobs:
         git diff --exit-code -G "(^[^ /])|(^\s+[^\*])" *.pb.{cc,h}
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
