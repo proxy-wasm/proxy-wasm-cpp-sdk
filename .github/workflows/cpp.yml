@@ -58,7 +58,7 @@ jobs:
       run: |
         go install github.com/google/addlicense@latest
         export PATH=$PATH:$(go env GOPATH)/bin
-        addlicense -check .
+        addlicense -ignore="**/BUILD" -check .
 
   protobuf:
     runs-on: ubuntu-latest
