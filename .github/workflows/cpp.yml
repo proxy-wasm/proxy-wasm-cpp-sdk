@@ -28,10 +28,13 @@ on:
     - 'envoy-release/**'
     - 'istio-release/**'
 
+  schedule:
+    - cron: '0 0 * * *'
+
 jobs:
 
   format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -41,8 +44,8 @@ jobs:
 
     - name: Format (clang-format)
       run: |
-        sudo apt-get install clang-format-9
-        find . -name "*.h" -o -name "*.cc" -o -name "*.proto" | grep -v ".pb." | xargs -n1 clang-format-9 -i
+        sudo apt-get install clang-format-12
+        find . -name "*.h" -o -name "*.cc" -o -name "*.proto" | grep -v ".pb." | xargs -n1 clang-format-12 -i
         git diff --exit-code
 
     - name: Format (buildifier)
@@ -55,10 +58,10 @@ jobs:
       run: |
         go install github.com/google/addlicense@latest
         export PATH=$PATH:$(go env GOPATH)/bin
-        addlicense -check .
+        addlicense -ignore="**/BUILD" -check .
 
   protobuf:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -81,7 +84,7 @@ jobs:
         git diff --exit-code -G "(^[^ /])|(^\s+[^\*])" *.pb.{cc,h}
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
