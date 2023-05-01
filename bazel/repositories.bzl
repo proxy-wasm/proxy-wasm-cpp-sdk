@@ -23,6 +23,8 @@ def proxy_wasm_cpp_sdk_repositories():
         # v3.1.7 with Bazel fixes
         strip_prefix = "emsdk-0ea8f8a8707070e9a7c83fbb4a3065683bcf1799/bazel",
         url = "https://github.com/emscripten-core/emsdk/archive/0ea8f8a8707070e9a7c83fbb4a3065683bcf1799.tar.gz",
+        patches = ["@proxy_wasm_cpp_sdk//bazel:emsdk.patch"],
+        patch_args = ["-p2"],
     )
 
     maybe(
