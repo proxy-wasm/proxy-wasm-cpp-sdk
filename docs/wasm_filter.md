@@ -213,7 +213,7 @@ Streaminfo could be fetched by
 
 > **note**
 >
-> This is called after [onDone])(#ondone).
+> This is called after [onDone](#ondone).
 
 ### onDelete
 
@@ -347,7 +347,7 @@ is used to control the stream and as target for gRPC stream callbacks.
 Application log API
 -------------------
 
-### log\*
+### log
 
 ``` {.sourceCode .cpp}
 void LogTrace(const std::string& logMessage)
