@@ -1,13 +1,12 @@
-# WebAssembly for Proxies (C++ SDK)
+# Proxy-Wasm C++ SDK Build Instructions
 
-[![Build Status][build-badge]][build-link]
-[![Apache 2.0 License][license-badge]][license-link]
-
-The SDK has dependencies on specific versions of the C++ WebAssembly toolchain Emscripten (https://emscripten.org) and the protobuf library, therefor use of a Docker image is recommended.
+The C++ SDK has dependencies on specific versions of the C++ WebAssembly
+toolchain [Emscripten](https://emscripten.org) and the protobuf library,
+therefore use of a Docker image is recommended.
 
 ## Docker
 
-A Dockerfile for the C++ SDK is provided in Dockerfile-sdk.
+A Dockerfile for the C++ SDK is provided in [Dockerfile-sdk](Dockerfile-sdk).
 
 It can built in this directory by:
 
@@ -15,7 +14,7 @@ It can built in this directory by:
 docker build -t wasmsdk:v2 -f Dockerfile-sdk .
 ```
 
-The docker image can be used for compiling wasm files.
+The docker image can be used for compiling C++ plugin code into Wasm modules.
 
 ### Creating a project for use with the Docker build image
 
@@ -66,8 +65,9 @@ docker run -v $PWD:/work -w /work  wasmsdk:v2 /build_wasm.sh
 
 ### Caching the standard libraries
 
-The first time that emscripten runs it will generate the standard libraries.  To cache these in the docker image,
-after the first successful compilation (e.g myproject.cc above), commit the image with the standard libraries:
+The first time that emscripten runs it will generate the standard libraries.  To
+cache these in the docker image, after the first successful compilation (e.g
+myproject.cc above), commit the image with the standard libraries:
 
 ```bash
 docker commit `docker ps -l | grep wasmsdk:v2 | awk '{print $1}'` wasmsdk:v2
@@ -77,9 +77,12 @@ This will save time on subsequent compiles.
 
 ### Using the SDK from a newer/specific version of Envoy
 
-To use a newer/specific version of the SDK (e.g. from the version of Enovy you are going to deploy the WebAssembly module to) bind that volume and use it in the Makefile.
+To use a newer/specific version of the SDK (e.g. from the version of Envoy you
+are going to deploy the WebAssembly module to), bind that volume and use it in
+the Makefile.
 
-Here is an example Makefile referencing the SDK at ../envoy/api/wasm/cpp and mounted as 'sdk' in the /work directory:
+Here is an example Makefile referencing the SDK at `../envoy/api/wasm/cpp` and
+mounted as `sdk` in the `/work` directory:
 
 ```makefile
 PROXY_WASM_CPP_SDK=/work/sdk
@@ -89,15 +92,19 @@ all: myproject.wasm
 include ${PROXY_WASM_CPP_SDK}/Makefile.base_lite
 ```
 
-Run docker pointing to Envoy sources in a directory parallel (at the same level) as your project directory:
+Run docker pointing to Envoy sources in a directory parallel (at the same level)
+as your project directory:
 
 ```bash
 docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v2 bash /build_wasm.sh
 ```
 
-### Using abseil form the image
+### Using Abseil from the Docker image
 
-Abseil (optionally) is built in /root/abseil and can be used. Note that the abseil containers (e.g. absl::flat\_hash\_set) exercise many syscalls which are not supported. Consequantally individual files should be pulled in which are relatively self contained (e.g. strings). Example customized Makefile:
+Abseil (optionally) is built in /root/abseil and can be used. Note that the
+Abseil containers (e.g. `absl::flat_hash_set`) exercise many syscalls which are
+not supported. Consequentially individual files should be pulled in which are
+relatively self contained (e.g. `strings`). Example customized Makefile:
 
 ```makefile
 PROXY_WASM_CPP_SDK=/sdk
@@ -113,7 +120,8 @@ all: plugin.wasm
                 em++ --no-entry -s EXPORTED_FUNCTIONS=['_malloc'] --std=c++17 -O3 -flto -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js ${ABSL_CPP} $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a -o $*.wasm
 ```
 
-Precompiled abseil libraries are also available, so the above can also be done as:
+Precompiled Abseil libraries are also available, so the above can also be done
+as:
 
 ```makefile
 PROXY_WASM_CPP_SDK=/sdk
@@ -131,7 +139,8 @@ all: plugin.wasm
 
 ### Ownership of the resulting .wasm files
 
-The compiled files may be owned by root.  To chown them add the follow lines to the Makefile and docker invocation:
+The compiled files may be owned by root.  To chown them, add the follow lines to
+the Makefile and docker invocation:
 
 ```makefile
 PROXY_WASM_CPP_SDK=/sdk
@@ -149,13 +158,17 @@ Invocation file (e.g. build.sh):
 docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v2 /build_wasm.sh
 ```
 
-## Dependencies for building WASM modules:
+## Dependencies for building Wasm modules:
 
-If you do not wish to use the Docker file, the dependencies can be installed by script (sdk\_container.sh), or by hand.
+If you do not wish to use the Docker image, the dependencies can be installed by
+script (sdk\_container.sh), or by hand.
 
 ### protobuf v3.9.1
 
-You must install the version of protobuf on your build system that matches the libprotobuf.a files (without any patches) so that the generated code matches the .a library.  Currently this is based on tag v3.9.1 of https://github.com/protocolbuffers/protobuf.
+You must install the version of protobuf on your build system that matches the
+libprotobuf.a files (without any patches) so that the generated code matches the
+.a library.  Currently this is based on tag v3.9.1 of
+https://github.com/protocolbuffers/protobuf.
 
 ```bash
 git clone https://github.com/protocolbuffers/protobuf
@@ -169,7 +182,7 @@ make check
 sudo make install
 ```
 
-### emscripten
+### Emscripten
 
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
@@ -178,7 +191,7 @@ cd emsdk
 ./emsdk install 3.1.7
 ./emsdk activate 3.1.7
 
-source ./emsdk\_env.sh
+source ./emsdk_env.sh
 ```
 
 It is possible later versions will work, e.g.
@@ -193,7 +206,9 @@ However 3.1.7 is known to work.
 
 ### Rebuilding the libprotobuf.a files
 
-If want to rebuild the libprotobuf.a files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm. Commit 4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
+If want to rebuild the libprotobuf.a files or use a different version see the
+instructions at https://github.com/kwonoj/protobuf-wasm. Commit
+4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
 
 ```bash
 git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
@@ -220,10 +235,4 @@ make
 sudo make install
 ```
 
-Note: ensure /usr/local/bin is in your path
-
-
-[build-badge]: https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/workflows/C++/badge.svg?branch=master
-[build-link]: https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/actions?query=workflow%3AC%2B%2B+branch%3Amaster
-[license-badge]: https://img.shields.io/github/license/proxy-wasm/proxy-wasm-cpp-sdk
-[license-link]: https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/blob/master/LICENSE
+Note: ensure /usr/local/bin is in your path.
