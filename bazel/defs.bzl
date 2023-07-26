@@ -18,8 +18,11 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 def _optimized_wasm_cc_binary_transition_impl(settings, attr):
     # TODO(PiotrSikora): Add -flto to copts/linkopts when fixed in emsdk.
     # See: https://github.com/emscripten-core/emsdk/issues/971
+    #
+    # Define STANDALONE_WASM at compile time as well as link time (below).
+    # This influences Abseil libraries using conditional dependencies.
     return {
-        "//command_line_option:copt": ["-O3"],
+        "//command_line_option:copt": ["-O3", "-DSTANDALONE_WASM"],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
         "//command_line_option:collect_code_coverage": False,
@@ -93,6 +96,12 @@ def proxy_wasm_cc_binary(
             "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
             "-sSTANDALONE_WASM",
             "-sEXPORTED_FUNCTIONS=_malloc",
+            # Disable pthreads, because USE_PTHREADS implies SHARED_MEMORY and
+            #  "STANDALONE_WASM does not support shared memories yet"
+            #
+            # https://emscripten.org/docs/porting/pthreads.html
+            # https://emscripten.org/docs/api_reference/wasm_workers.html
+            "-sUSE_PTHREADS=0",
         ],
         tags = tags + [
             "manual",
