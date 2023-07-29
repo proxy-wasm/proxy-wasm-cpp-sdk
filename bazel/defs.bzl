@@ -21,6 +21,7 @@ def _optimized_wasm_cc_binary_transition_impl(settings, attr):
     #
     # Define STANDALONE_WASM at compile time as well as link time (below).
     # This influences Abseil libraries using conditional dependencies.
+    # TODO(martijneken): Remove after Abseil stops using this define.
     return {
         "//command_line_option:copt": ["-O3", "-DSTANDALONE_WASM"],
         "//command_line_option:cxxopt": [],
@@ -94,14 +95,7 @@ def proxy_wasm_cc_binary(
         linkopts = linkopts + [
             "--no-entry",
             "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
-            "-sSTANDALONE_WASM",
             "-sEXPORTED_FUNCTIONS=_malloc",
-            # Disable pthreads, because USE_PTHREADS implies SHARED_MEMORY and
-            #  "STANDALONE_WASM does not support shared memories yet"
-            #
-            # https://emscripten.org/docs/porting/pthreads.html
-            # https://emscripten.org/docs/api_reference/wasm_workers.html
-            "-sUSE_PTHREADS=0",
         ],
         tags = tags + [
             "manual",
@@ -111,6 +105,8 @@ def proxy_wasm_cc_binary(
     )
 
     wasm_cc_binary(
+        standalone = True,
+        threads = "off",
         name = "wasm_" + name,
         cc_target = ":proxy_wasm_" + name.rstrip(".wasm"),
         tags = tags + [
