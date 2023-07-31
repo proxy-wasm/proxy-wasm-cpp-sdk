@@ -1,0 +1,5 @@
+# Required for emsdk: https://github.com/emscripten-core/emsdk/blob/main/bazel/README.md
+build --incompatible_enable_cc_toolchain_resolution
+
+# C++14 or higher is required by Abseil, which is included from protobuf.
+build --cxxopt=-std=c++17 --host_cxxopt=-std=c++17

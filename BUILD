@@ -13,7 +13,6 @@ cc_library(
         "proxy_wasm_api.h",
         "proxy_wasm_externs.h",
     ],
-    copts = ["-std=c++17"],
     deps = [
         ":common_lib",
         "@com_google_protobuf//:protobuf_lite",
@@ -26,7 +25,6 @@ cc_library(
         "proxy_wasm_common.h",
         "proxy_wasm_enums.h",
     ],
-    copts = ["-std=c++17"],
 )
 
 cc_library(
@@ -41,7 +39,6 @@ cc_library(
         "proxy_wasm_externs.h",
         "proxy_wasm_intrinsics.h",
     ],
-    copts = ["-std=c++17"],
     visibility = ["//visibility:public"],
 )
 
@@ -65,7 +62,6 @@ proto_library(
 cc_library(
     name = "proxy_wasm_intrinsics_lite",
     hdrs = ["proxy_wasm_intrinsics_lite.h"],
-    copts = ["-std=c++17"],
     defines = ["PROXY_WASM_PROTOBUF_LITE"],
     visibility = ["//visibility:public"],
     deps = [
@@ -79,7 +75,6 @@ cc_library(
 cc_library(
     name = "proxy_wasm_intrinsics_full",
     hdrs = ["proxy_wasm_intrinsics_full.h"],
-    copts = ["-std=c++17"],
     defines = ["PROXY_WASM_PROTOBUF_FULL"],
     visibility = ["//visibility:public"],
     deps = [
