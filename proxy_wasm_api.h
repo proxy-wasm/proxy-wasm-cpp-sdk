@@ -703,8 +703,7 @@ public:
   //
   // Returns `FilterStatus` indicating whether processing of the connection
   // should continue or pause until a later call to `continueDownstream`.
-  virtual FilterStatus onDownstreamData(size_t /* data_size */,
-                                        bool /* end_of_stream */) {
+  virtual FilterStatus onDownstreamData(size_t /* data_size */, bool /* end_of_stream */) {
     return FilterStatus::Continue;
   }
 
@@ -716,8 +715,7 @@ public:
   //
   // Returns `FilterStatus` indicating whether processing of the connection
   // should continue or pause until a later call to `continueUpstream`.
-  virtual FilterStatus onUpstreamData(size_t /* data_size */,
-                                      bool /* end_of_stream */) {
+  virtual FilterStatus onUpstreamData(size_t /* data_size */, bool /* end_of_stream */) {
     return FilterStatus::Continue;
   }
 
@@ -1583,9 +1581,13 @@ template <> inline std::string toString(std::string t) { return t; }
 
 template <> inline std::string toString(bool t) { return t ? "true" : "false"; }
 
-template <typename T> struct StringToStringView { typedef T type; };
+template <typename T> struct StringToStringView {
+  typedef T type;
+};
 
-template <> struct StringToStringView<std::string> { typedef std::string_view type; };
+template <> struct StringToStringView<std::string> {
+  typedef std::string_view type;
+};
 
 inline uint32_t MetricBase::resolveFullName(const std::string &n) {
   auto it = metric_ids.find(n);
