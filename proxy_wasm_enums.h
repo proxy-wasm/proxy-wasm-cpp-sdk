@@ -23,23 +23,77 @@
 
 #include <cstdint>
 
+// Severity levels for logging operations.
 enum class LogLevel : int32_t { trace, debug, info, warn, error, critical, Max = critical };
-enum class FilterStatus : int32_t { Continue = 0, StopIteration = 1 };
-enum class FilterHeadersStatus : int32_t {
+
+// Enum indicating whether to continue processing of a TCP(-like) stream
+// following a callback.
+enum class FilterStatus : int32_t {
+  // The host should continue to process the stream.
   Continue = 0,
+  // The host should suspend further processing of the stream until plugin code
+  // unpauses the stream via a call to `continueDownstream` or
+  // `continueUpstream`.
+  StopIteration = 1
+};
+
+// Enum indicating whether to continue processing of a stream following an HTTP
+// header-related callback.
+enum class FilterHeadersStatus : int32_t {
+  // The host should continue to process the stream.
+  Continue = 0,
+  // The host should suspend further processing of headers until plugin code
+  // unpauses the stream via a call to `continueRequest` or `continueResponse`.
   StopIteration = 1,
+  // The host should terminate the stream.
   ContinueAndEndStream = 2,
+  // The host should suspend further processing of the stream until plugin code
+  // unpauses the stream via a call to `continueRequest` or `continueResponse`,
+  // in the meantime buffering all body bytes received.
   StopAllIterationAndBuffer = 3,
+  // The host should suspend further processing of the stream including reading
+  // body data until plugin code unpauses the stream via a call to
+  // `continueRequest` or `continueResponse`.
   StopAllIterationAndWatermark = 4,
 };
-enum class FilterMetadataStatus : int32_t { Continue = 0 };
-enum class FilterTrailersStatus : int32_t { Continue = 0, StopIteration = 1 };
-enum class FilterDataStatus : int32_t {
+
+// Enum indicating whether to continue processing of a stream following a
+// metadata-related callback.
+enum class FilterMetadataStatus : int32_t {
+  // The host should continue to process the stream.
+  Continue = 0
+};
+
+// Enum indicating whether to continue processing of a stream following an HTTP
+// trailer-related callback.
+enum class FilterTrailersStatus : int32_t {
+  // The host should continue to process the stream.
   Continue = 0,
+  // The host should suspend further processing of the stream until plugin code
+  // unpauses the stream via a call to `continueRequest` or `continueResponse`.
+  StopIteration = 1
+};
+
+// Enum indicating whether to continue processing of a stream following an HTTP
+// body-related callback.
+enum class FilterDataStatus : int32_t {
+  // The host should continue to process the stream.
+  Continue = 0,
+  // The host should suspend further processing of the stream until plugin code
+  // unpauses the stream via a call to `continueRequest` or `continueResponse`,
+  // in the meantime buffering all body bytes received.
   StopIterationAndBuffer = 1,
+  // The host should suspend further processing of the stream including reading
+  // body data until plugin code unpauses the stream via a call to
+  // `continueRequest` or `continueResponse`.
   StopIterationAndWatermark = 2,
+  // The host should suspend further processing of the stream other than
+  // receiving body data until plugin code unpauses the stream via a call to
+  // `continueRequest` or `continueResponse`.
   StopIterationNoBuffer = 3
 };
+
+// gRPC status codes.
 enum class GrpcStatus : int32_t {
   Ok = 0,
   Canceled = 1,
@@ -61,14 +115,23 @@ enum class GrpcStatus : int32_t {
   MaximumValid = Unauthenticated,
   InvalidCode = -1
 };
+
+// Types of metrics.
 enum class MetricType : int32_t {
+  // Value representing a cumulative count of some event.
   Counter = 0,
+  // Value representing a current snapshot of some quantity.
   Gauge = 1,
+  // Bucketed distribution of values.
   Histogram = 2,
   Max = 2,
 };
+
+// Enum indicating how a connection was closed.
 enum class CloseType : int32_t {
   Unknown = 0,
-  Local = 1,  // Close initiated by the proxy.
-  Remote = 2, // Close initiated by the peer.
+  // Close initiated by the proxy.
+  Local = 1,
+  // Close initiated by the peer.
+  Remote = 2,
 };
