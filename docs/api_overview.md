@@ -74,6 +74,7 @@ plugin:
 
 * `validateConfiguration`: May be called to validate the configuration data that
   will be passed to a plugin on startup, e.g. in the control plane.
+* `onCreate`: called when context is created.
 * `onStart`: called on plugin start.
 * `onConfigure`: called on plugin start, and any time configuration subsequently
   changes.
@@ -371,6 +372,22 @@ for representing and updating metrics:
 Metrics can be subdivided by tags, using similar structure to [Envoy
 statistics](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/observability/statistics).
 
+## Foreign function interface (FFI)
+
+Hosts can make additional hostcalls available for plugins to call via the
+foreign function interface. Plugin code can invoke such hostcalls via the
+`proxy_call_foreign_function` hostcall defined in [proxy_wasm_externs.h], which
+specifies the foreign hostcall to invoke by a string name.
+
+Hosts can also invoke callbacks for events outside of those defined by the
+Proxy-Wasm spec, which are dispatched to the plugin via calls to
+`ContextBase::onForeignFunction`. These calls use an integer function ID to
+identify the foreign callback to invoke.
+
+With both foreign hostcalls and callbacks, the plugin and host must agree
+out-of-band on what hostcalls/callbacks will be available. For API details, see
+associated doc comments in [proxy_wasm_externs.h] and [proxy_wasm_api.h].
+
 ## Example
 
 Some of the concepts and APIs described above are illustrated by the example
@@ -430,10 +447,9 @@ The main files containing the Proxy-Wasm C++ SDK API and implementation are
 listed below:
 
 * [proxy_wasm_api.h]: main SDK API definition and implementation
+* [proxy_wasm_externs.h]: declarations for ABI-level hostcalls and callbacks
 * [proxy_wasm_common.h](../proxy_wasm_common.h): supporting types for the API
 * [proxy_wasm_enums.h](../proxy_wasm_enums.h): supporting enums for the API
-* [proxy_wasm_externs.h](../proxy_wasm_externs.h): declarations for ABI-level
-  hostcalls and callbacks
 * [proxy_wasm_intrinsics.js](../proxy_wasm_intrinsics.js): list of Proxy-Wasm
   ABI hostcalls, for use by [Emscripten](https://emscripten.org)
 * [proxy_wasm_intrinsics.proto](../proxy_wasm_intrinsics.proto): protobuf types
@@ -451,4 +467,5 @@ listed below:
 [HTTP callouts]: #http-callouts
 [gRPC callouts]: #grpc-callouts
 [proxy_wasm_api.h]: ../proxy_wasm_api.h
+[proxy_wasm_externs.h]: ../proxy_wasm_externs.h
 [http_wasm_example.cc]: ../example/http_wasm_example.cc
