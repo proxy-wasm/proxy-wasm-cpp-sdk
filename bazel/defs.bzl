@@ -22,8 +22,13 @@ def _optimized_wasm_cc_binary_transition_impl(settings, attr):
     # Define STANDALONE_WASM at compile time as well as link time (below).
     # This influences Abseil libraries using conditional dependencies.
     # TODO(martijneken): Remove after Abseil stops using this define.
+    #
+    # Disable warning -Wdeprecated-non-prototype for zlib:
+    # https://github.com/madler/zlib/issues/633
+    # This is fixed in more recent versions of zlib / protobuf.
+    # TODO(martijneken): Remove after protobuf version update.
     return {
-        "//command_line_option:copt": ["-O3", "-DSTANDALONE_WASM"],
+        "//command_line_option:copt": ["-O3", "-DSTANDALONE_WASM", "-Wno-deprecated-non-prototype"],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
         "//command_line_option:collect_code_coverage": False,

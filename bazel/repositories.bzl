@@ -30,18 +30,7 @@ def proxy_wasm_cpp_sdk_repositories():
     maybe(
         http_archive,
         name = "com_google_protobuf",
-        sha256 = "a700a49470d301f1190a487a923b5095bf60f08f4ae4cac9f5f7c36883d17971",
-        strip_prefix = "protobuf-23.4",
-        url = "https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protobuf-23.4.tar.gz",
-    )
-
-    # Update protobuf dependency to fix unused function CodepointSkipBackwards.
-    # https://github.com/protocolbuffers/utf8_range/commit/d863bc33e15cba6d873c878dcca9e6fe52b2f8cb
-    # TODO(martijneken): Remove this when protobuf picks up the fix.
-    maybe(
-        http_archive,
-        name = "utf8_range",
-        sha256 = "568988b5f7261ca181468dba38849fabf59dd9200fb2ed4b2823da187ef84d8c",
-        strip_prefix = "utf8_range-d863bc33e15cba6d873c878dcca9e6fe52b2f8cb",
-        url = "https://github.com/protocolbuffers/utf8_range/archive/d863bc33e15cba6d873c878dcca9e6fe52b2f8cb.zip",
+        sha256 = "77ad26d3f65222fd96ccc18b055632b0bfedf295cb748b712a98ba1ac0b704b2",
+        strip_prefix = "protobuf-3.17.3",
+        url = "https://github.com/protocolbuffers/protobuf/releases/download/v3.17.3/protobuf-all-3.17.3.tar.gz",
     )
