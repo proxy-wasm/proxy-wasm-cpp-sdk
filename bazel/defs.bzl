@@ -18,8 +18,17 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 def _optimized_wasm_cc_binary_transition_impl(settings, attr):
     # TODO(PiotrSikora): Add -flto to copts/linkopts when fixed in emsdk.
     # See: https://github.com/emscripten-core/emsdk/issues/971
+    #
+    # Define STANDALONE_WASM at compile time as well as link time (below).
+    # This influences Abseil libraries using conditional dependencies.
+    # TODO(martijneken): Remove after Abseil stops using this define.
+    #
+    # Disable warning -Wdeprecated-non-prototype for zlib:
+    # https://github.com/madler/zlib/issues/633
+    # This is fixed in more recent versions of zlib / protobuf.
+    # TODO(martijneken): Remove after protobuf version update.
     return {
-        "//command_line_option:copt": ["-O3"],
+        "//command_line_option:copt": ["-O3", "-DSTANDALONE_WASM", "-Wno-deprecated-non-prototype"],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
         "//command_line_option:collect_code_coverage": False,
@@ -91,7 +100,6 @@ def proxy_wasm_cc_binary(
         linkopts = linkopts + [
             "--no-entry",
             "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
-            "-sSTANDALONE_WASM",
             "-sEXPORTED_FUNCTIONS=_malloc",
         ],
         tags = tags + [
@@ -102,6 +110,8 @@ def proxy_wasm_cc_binary(
     )
 
     wasm_cc_binary(
+        standalone = True,
+        threads = "off",
         name = "wasm_" + name,
         cc_target = ":proxy_wasm_" + name.rstrip(".wasm"),
         tags = tags + [
