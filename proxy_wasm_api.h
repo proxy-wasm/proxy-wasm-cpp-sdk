@@ -28,6 +28,7 @@
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <unordered_map>
