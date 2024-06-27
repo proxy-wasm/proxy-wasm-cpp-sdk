@@ -168,18 +168,20 @@ template <typename Pairs> size_t pairsSize(const Pairs &result) {
   return size;
 }
 
-// Marshals `result` to the memory buffer `buffer`.
-template <typename Pairs> void marshalPairs(const Pairs &result, char *buffer) {
+// Marshals `pairs` to the memory buffer `buffer`. `Pairs` is a map-like type
+// that provides a `size` method and iteration over elements that are
+// `std::pair`s of `std::string` or `std::string_view`s.
+template <typename Pairs> void marshalPairs(const Pairs &pairs, char *buffer) {
   char *b = buffer;
-  *reinterpret_cast<uint32_t *>(b) = result.size();
+  *reinterpret_cast<uint32_t *>(b) = pairs.size();
   b += sizeof(uint32_t);
-  for (auto &p : result) {
+  for (auto &p : pairs) {
     *reinterpret_cast<uint32_t *>(b) = p.first.size();
     b += sizeof(uint32_t);
     *reinterpret_cast<uint32_t *>(b) = p.second.size();
     b += sizeof(uint32_t);
   }
-  for (auto &p : result) {
+  for (auto &p : pairs) {
     memcpy(b, p.first.data(), p.first.size());
     b += p.first.size();
     *b++ = 0;

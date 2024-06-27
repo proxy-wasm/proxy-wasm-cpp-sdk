@@ -225,14 +225,4 @@ cp protobuf-wasm/src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a
 cp protobuf-wasm/src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
 ```
 
-### WAVM binaries
-
-```bash
-git clone git@github.com:WAVM/WAVM.git
-cd WAVM
-cmake "."
-make
-sudo make install
-```
-
 Note: ensure /usr/local/bin is in your path.

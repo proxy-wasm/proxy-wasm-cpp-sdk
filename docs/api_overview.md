@@ -59,8 +59,7 @@ these to create and return instances of its own subclasses of `RootContext` and
 
 ```c++
 static RegisterContextFactory register_ExampleContext(
-    CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext),
-    "my_root_id");
+    CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext));
 ```
 
 `ROOT_FACTORY` and `CONTEXT_FACTORY` are convenience macros for lambdas that
@@ -113,11 +112,14 @@ in the lifecycle of a stream:
 * `onCreate`: called when handling of a new stream starts.
 * `onDone`: called when the host is done processing the stream.
 * `onLog`: called after the host is done processing the stream, if the plugin is
-  being used for access logging.
+  being used for access logging (for example, in Envoy, as a
+  [WasmAccessLog](https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/access_loggers/wasm/v3/wasm.proto#extensions-access-loggers-wasm-v3-wasmaccesslog)
+  extension).
 * `onDelete`: called after the plugin has completed all processing related to
   the stream, as indication to release resources.
 
-`Context` instances also receive callbacks corresponding to stream events:
+`Context` instances also receive callbacks corresponding to stream events. For
+HTTP or gRPC streams, these are:
 
 * `onRequestHeaders`: called when HTTP or gRPC request headers are received.
 * `onRequestBody`: called when HTTP or gRPC request body data is received.
@@ -125,11 +127,20 @@ in the lifecycle of a stream:
 * `onResponseHeaders`: called when HTTP or gRPC response headers are received.
 * `onResponseBody`: called when HTTP or gRPC response body data is received.
 * `onResponseTrailers`: called when HTTP or gRPC response trailers are received.
+
+For TCP streams, `Context` instances may receive the following callbacks:
+
 * `onNewConnection`: called when a new connection is established.
 * `onDownstreamData`: called when a new chunk of data is received from
   downstream over a connection.
 * `onUpstreamData`: called when a new chunk of data is received from upstream
   over a connection.
+
+Callback methods return status enums that indicate whether and how the host
+should continue to process the stream. Status enum meanings are specified in the
+doc comments in [proxy_wasm_enums.h]. Callbacks can also generate an immediate
+local response to an HTTP or gRPC request using the `sendLocalResponse`
+hostcall.
 
 For API details, see doc comments for the `Context` class in [proxy_wasm_api.h].
 
@@ -217,7 +228,7 @@ inspect data sent by the upstream client could override the
 `Context::onUpstreamData` method.
 
 To access the actual data being proxied, plugin code would use the
-buffer-related hostcalls described in [Buffers], specifying
+buffer-related hostcalls described in [Buffers](#Buffers), specifying
 `NetworkUpstreamData` as the `WasmBufferType`.
 
 ## Timers
@@ -326,18 +337,8 @@ prepended to the log message:
 * `LOG_ERROR`
 * `LOG_CRITICAL`
 
-Additionally, there is a LOG macro that accepts log level as a
-parameter. These macros layer on top of hostcall functions:
-
-* `logTrace`
-* `logDebug`
-* `logInfo`
-* `logWarn`
-* `logError`
-* `logCritical`
-
-All macros and hostcalls above allow plugin execution to continue. There
-is one further logging hostcall that terminates plugin execution:
+The macros above allow plugin execution to continue. There is also a logging
+hostcall that terminates plugin execution:
 
 * `logAbort`: logs at Critical level, then aborts the plugin
 
