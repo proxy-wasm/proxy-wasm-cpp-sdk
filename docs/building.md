@@ -6,9 +6,9 @@ therefore use of a Docker image is recommended.
 
 ## Docker
 
-A Dockerfile for the C++ SDK is provided in [Dockerfile-sdk](Dockerfile-sdk).
+A Dockerfile for the C++ SDK is provided in [Dockerfile-sdk](../Dockerfile-sdk).
 
-It can built in this directory by:
+It can built in this repository's root directory by:
 
 ```bash
 docker build -t wasmsdk:v2 -f Dockerfile-sdk .
@@ -74,30 +74,6 @@ docker commit `docker ps -l | grep wasmsdk:v2 | awk '{print $1}'` wasmsdk:v2
 ```
 
 This will save time on subsequent compiles.
-
-### Using the SDK from a newer/specific version of Envoy
-
-To use a newer/specific version of the SDK (e.g. from the version of Envoy you
-are going to deploy the WebAssembly module to), bind that volume and use it in
-the Makefile.
-
-Here is an example Makefile referencing the SDK at `../envoy/api/wasm/cpp` and
-mounted as `sdk` in the `/work` directory:
-
-```makefile
-PROXY_WASM_CPP_SDK=/work/sdk
-
-all: myproject.wasm
-
-include ${PROXY_WASM_CPP_SDK}/Makefile.base_lite
-```
-
-Run docker pointing to Envoy sources in a directory parallel (at the same level)
-as your project directory:
-
-```bash
-docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v2 bash /build_wasm.sh
-```
 
 ### Using Abseil from the Docker image
 
@@ -206,8 +182,8 @@ However 3.1.7 is known to work.
 
 ### Rebuilding the libprotobuf.a files
 
-If want to rebuild the libprotobuf.a files or use a different version see the
-instructions at https://github.com/kwonoj/protobuf-wasm. Commit
+If want to rebuild the libprotobuf.a files using a version of protobuf prior to
+3.15, see the instructions at https://github.com/kwonoj/protobuf-wasm. Commit
 4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
 
 ```bash

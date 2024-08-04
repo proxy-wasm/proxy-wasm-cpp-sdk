@@ -1,4 +1,4 @@
-# Proxy-Wasm C++ SDK
+# WebAssembly for Proxies (C++ SDK)
 
 [![Build Status][build-badge]][build-link]
 [![Apache 2.0 License][license-badge]][license-link]

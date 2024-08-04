@@ -44,12 +44,14 @@ enum class FilterHeadersStatus : int32_t {
   Continue = 0,
   // The host should suspend further processing of headers until plugin code
   // unpauses the stream via a call to `continueRequest` or `continueResponse`.
+  // Some host implementations may treat this equivalently to
+  // `StopAllIterationAndWatermark`.
   StopIteration = 1,
   // The host should terminate the stream.
   ContinueAndEndStream = 2,
   // The host should suspend further processing of the stream until plugin code
   // unpauses the stream via a call to `continueRequest` or `continueResponse`,
-  // in the meantime buffering all body bytes received.
+  // in the meantime buffering all body bytes received, subject to host limits.
   StopAllIterationAndBuffer = 3,
   // The host should suspend further processing of the stream including reading
   // body data until plugin code unpauses the stream via a call to
@@ -81,7 +83,7 @@ enum class FilterDataStatus : int32_t {
   Continue = 0,
   // The host should suspend further processing of the stream until plugin code
   // unpauses the stream via a call to `continueRequest` or `continueResponse`,
-  // in the meantime buffering all body bytes received.
+  // in the meantime buffering all body bytes received, subject to host limits.
   StopIterationAndBuffer = 1,
   // The host should suspend further processing of the stream including reading
   // body data until plugin code unpauses the stream via a call to
