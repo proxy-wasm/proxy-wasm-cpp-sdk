@@ -2,7 +2,7 @@
 
 This page explains the main concepts and structure of the C++ SDK API. For
 detailed API semantics, refer to the doc comments in the header files listed in
-the [codemap](#codemap) section, in particular [proxy_wasm_api.h].
+the [Codemap] section, in particular [proxy_wasm_api.h].
 
 ## Concepts and terminology
 
@@ -33,12 +33,13 @@ the [codemap](#codemap) section, in particular [proxy_wasm_api.h].
     with the current stream. The hostcalls are defined as methods on `Context`
     base classes, which plugin code can call.
     
-  There are two types of Contexts: *Root Contexts* and *Stream Contexts*
-  (sometimes just called Contexts). Root Contexts are represented by the
-  `RootContext` class, and are associated with plugins as a whole--i.e. within a
-  given Wasm VM, there is one Root Context per plugin. Stream Contexts are
-  represented by the `Context` class, and are associated with individual
-  streams--i.e. incoming HTTP/gRPC calls, or TCP streams.
+  There are two types of Contexts: *Plugin Contexts* (also known as Root
+  Contexts) and *Stream Contexts* (sometimes just called Contexts). Plugin
+  Contexts are represented by the `RootContext` class, and are associated with
+  plugins as a whole--i.e. within a given Wasm VM, there is one Plugin Context
+  per plugin. Stream Contexts are represented by the `Context` class, and are
+  associated with individual streams--i.e. incoming HTTP/gRPC calls, or TCP
+  streams.
   
   In the C++ SDK programming model, plugins are implemented by subclassing
   `RootContext` and/or `Context`, and providing implementations of their various
@@ -53,7 +54,7 @@ the [codemap](#codemap) section, in particular [proxy_wasm_api.h].
 `RegisterContextFactory` is the mechanism for bootstrapping plugin code. Plugin
 code instantiates a `RegisterContextFactory` in a static
 variable. `RegisterContextFactory` takes as constructor params `std::function`s
-for creating new root context and stream context instances. The plugin can use
+for creating new plugin context and stream context instances. The plugin can use
 these to create and return instances of its own subclasses of `RootContext` and
 `Context`. For example:
 
@@ -112,8 +113,7 @@ in the lifecycle of a stream:
 * `onCreate`: called when handling of a new stream starts.
 * `onDone`: called when the host is done processing the stream.
 * `onLog`: called after the host is done processing the stream, if the plugin is
-  being used for access logging (for example, in Envoy, as a
-  [WasmAccessLog](https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/access_loggers/wasm/v3/wasm.proto#extensions-access-loggers-wasm-v3-wasmaccesslog)
+  being used for access logging (for example, in Envoy, as a [WasmAccessLog]
   extension).
 * `onDelete`: called after the plugin has completed all processing related to
   the stream, as indication to release resources.
@@ -122,10 +122,12 @@ in the lifecycle of a stream:
 HTTP or gRPC streams, these are:
 
 * `onRequestHeaders`: called when HTTP or gRPC request headers are received.
-* `onRequestBody`: called when HTTP or gRPC request body data is received.
+* `onRequestBody`: called when a new chunk of HTTP or gRPC request body data is
+  received.
 * `onRequestTrailers`: called when HTTP or gRPC request trailers are received.
 * `onResponseHeaders`: called when HTTP or gRPC response headers are received.
-* `onResponseBody`: called when HTTP or gRPC response body data is received.
+* `onResponseBody`: called when a new chunk of HTTP or gRPC response body data
+  is received.
 * `onResponseTrailers`: called when HTTP or gRPC response trailers are received.
 
 For TCP streams, `Context` instances may receive the following callbacks:
@@ -169,7 +171,7 @@ individual callbacks in [proxy_wasm_api.h] for which buffers are accessible in
 each callback. Documentation for the `WasmData` class is also in
 [proxy_wasm_api.h].
 
-## Handling HTTP and gRPC requests
+## Handling HTTP and gRPC request headers and trailers
 
 Plugins that handle HTTP and gRPC requests do so by overriding one or more of
 the HTTP-related callback methods declared by the `Context` class (see the
@@ -207,14 +209,13 @@ headers, and response trailers.
 gRPC requests received by the proxy are dispatched to the plugin using the same
 `Context` callback methods as HTTP requests. Plugin code can determine whether
 an incoming request is gRPC in the same way that network proxies do: by checking
-if the ":method" pseudoheader has value "POST" and the "content-type" header has
-value "application/grpc".
+if the ":method" pseudoheader has value "POST" and the "content-type" header
+starts with value "application/grpc".
 
 Plugin callbacks can access the request URL via the ":method", ":scheme",
 ":authority", and ":path" pseudo-headers defined in [RFC 9113 section
-8.3.1](https://datatracker.ietf.org/doc/html/rfc9113#section-8.3.1). They can
-access HTTP response status via the ":status" pseudo-header defined in [RFC 9113
-section 8.3.2](https://datatracker.ietf.org/doc/html/rfc9113#section-8.3.2).
+8.3.1]. They can access HTTP response status via the ":status" pseudo-header
+defined in [RFC 9113 section 8.3.2].
 
 For API details, see doc comments accompanying the functions in
 [proxy_wasm_api.h].
@@ -228,7 +229,7 @@ inspect data sent by the upstream client could override the
 `Context::onUpstreamData` method.
 
 To access the actual data being proxied, plugin code would use the
-buffer-related hostcalls described in [Buffers](#Buffers), specifying
+buffer-related hostcalls described in [Buffers], specifying
 `NetworkUpstreamData` as the `WasmBufferType`.
 
 ## Timers
@@ -371,7 +372,7 @@ for representing and updating metrics:
 - `Metric`: all of the above
 
 Metrics can be subdivided by tags, using similar structure to [Envoy
-statistics](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/observability/statistics).
+statistics].
 
 ## Foreign function interface (FFI)
 
@@ -449,24 +450,35 @@ listed below:
 
 * [proxy_wasm_api.h]: main SDK API definition and implementation
 * [proxy_wasm_externs.h]: declarations for ABI-level hostcalls and callbacks
-* [proxy_wasm_common.h](../proxy_wasm_common.h): supporting types for the API
-* [proxy_wasm_enums.h](../proxy_wasm_enums.h): supporting enums for the API
-* [proxy_wasm_intrinsics.js](../proxy_wasm_intrinsics.js): list of Proxy-Wasm
-  ABI hostcalls, for use by [Emscripten](https://emscripten.org)
-* [proxy_wasm_intrinsics.proto](../proxy_wasm_intrinsics.proto): protobuf types
-  needed for gRPC calls
-* [proxy_wasm_intrinsics.h](../proxy_wasm_intrinsics.h): combined header file
-  that includes all other header files
-* [proxy_wasm_intrinsics.cc](../proxy_wasm_intrinsics.cc): implementation of
-  dispatch from ABI-level Proxy-Wasm callbacks to [Context] and [RootContext]
-  callback methods.
+* [proxy_wasm_common.h]: supporting types for the API
+* [proxy_wasm_enums.h]: supporting enums for the API
+* [proxy_wasm_intrinsics.js]: list of Proxy-Wasm ABI hostcalls, for use by
+  [Emscripten]
+* [proxy_wasm_intrinsics.proto]: protobuf types needed for gRPC calls
+* [proxy_wasm_intrinsics.h]: combined header file that includes all other header
+  files
+* [proxy_wasm_intrinsics.cc]: implementation of dispatch from ABI-level
+  Proxy-Wasm callbacks to [Context] and [RootContext] callback methods.
 
+[Buffers]: #buffers
+[Codemap]: #codemap
 [Context]: #context
-[RootContext]: #rootcontext
-[Timers]: #timers
-[Shared queues]: #shared-queues
+[Emscripten]: https://emscripten.org
+[Envoy statistics]: https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/observability/statistics
 [HTTP callouts]: #http-callouts
+[RFC 9113 section 8.3.1]: https://datatracker.ietf.org/doc/html/rfc9113#section-8.3.1
+[RFC 9113 section 8.3.2]: https://datatracker.ietf.org/doc/html/rfc9113#section-8.3.2
+[RootContext]: #rootcontext
+[Shared queues]: #shared-queues
+[Timers]: #timers
+[WasmAccessLog]: https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/access_loggers/wasm/v3/wasm.proto#extensions-access-loggers-wasm-v3-wasmaccesslog
 [gRPC callouts]: #grpc-callouts
-[proxy_wasm_api.h]: ../proxy_wasm_api.h
-[proxy_wasm_externs.h]: ../proxy_wasm_externs.h
 [http_wasm_example.cc]: ../example/http_wasm_example.cc
+[proxy_wasm_api.h]: ../proxy_wasm_api.h
+[proxy_wasm_common.h]: ../proxy_wasm_common.h
+[proxy_wasm_enums.h]: ../proxy_wasm_enums.h
+[proxy_wasm_externs.h]: ../proxy_wasm_externs.h
+[proxy_wasm_intrinsics.cc]: ../proxy_wasm_intrinsics.cc
+[proxy_wasm_intrinsics.h]: ../proxy_wasm_intrinsics.h
+[proxy_wasm_intrinsics.js]: ../proxy_wasm_intrinsics.js
+[proxy_wasm_intrinsics.proto]: ../proxy_wasm_intrinsics.proto
