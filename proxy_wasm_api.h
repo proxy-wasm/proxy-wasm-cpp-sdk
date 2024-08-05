@@ -1583,13 +1583,9 @@ template <> inline std::string toString(std::string t) { return t; }
 
 template <> inline std::string toString(bool t) { return t ? "true" : "false"; }
 
-template <typename T> struct StringToStringView {
-  typedef T type;
-};
+template <typename T> struct StringToStringView { typedef T type; };
 
-template <> struct StringToStringView<std::string> {
-  typedef std::string_view type;
-};
+template <> struct StringToStringView<std::string> { typedef std::string_view type; };
 
 inline uint32_t MetricBase::resolveFullName(const std::string &n) {
   auto it = metric_ids.find(n);
