@@ -18,13 +18,13 @@ on:
 
   pull_request:
     branches:
-    - master
+    - main
     - 'envoy-release/**'
     - 'istio-release/**'
 
   push:
     branches:
-    - master
+    - main
     - 'envoy-release/**'
     - 'istio-release/**'
 
