@@ -24,6 +24,8 @@
 #include <cstdint>
 #include <string>
 
+// Return status of a Proxy-Wasm hostcall. Corresponds to Proxy-Wasm ABI
+// `proxy_status_t`.
 enum class WasmResult : uint32_t {
   Ok = 0,
   // The result could not be found, e.g. a provided key did not appear in a
@@ -76,37 +78,67 @@ inline std::string toString(WasmResult r) {
 }
 #undef _CASE
 
+// HTTP header type. Corresponds to Proxy-Wasm ABI `proxy_header_map_type_t`.
 enum class WasmHeaderMapType : int32_t {
-  RequestHeaders = 0,              // During the onLog callback these are immutable
-  RequestTrailers = 1,             // During the onLog callback these are immutable
-  ResponseHeaders = 2,             // During the onLog callback these are immutable
-  ResponseTrailers = 3,            // During the onLog callback these are immutable
-  GrpcReceiveInitialMetadata = 4,  // Immutable
-  GrpcReceiveTrailingMetadata = 5, // Immutable
-  HttpCallResponseHeaders = 6,     // Immutable
-  HttpCallResponseTrailers = 7,    // Immutable
+  // HTTP request headers. During the `onLog` callback these are immutable.
+  RequestHeaders = 0,
+  // HTTP request trailers. During the `onLog` callback these are immutable.
+  RequestTrailers = 1,
+  // HTTP response headers. During the `onLog` callback these are immutable.
+  ResponseHeaders = 2,
+  // HTTP response trailers. During the `onLog` callback these are immutable.
+  ResponseTrailers = 3,
+  // Initial metadata for the response to a gRPC callout. Immutable.
+  GrpcReceiveInitialMetadata = 4,
+  // Trailing metadata for the response to a gRPC callout. Immutable.
+  GrpcReceiveTrailingMetadata = 5,
+  // HTTP response headers for the response to an HTTP callout. Immutable.
+  HttpCallResponseHeaders = 6,
+  // HTTP response trailers for the response to an HTTP callout. Immutable.
+  HttpCallResponseTrailers = 7,
   MAX = 7,
 };
+
+// Data buffer types. Corresponds to Proxy-Wasm ABI `proxy_buffer_type_t`.
 enum class WasmBufferType : int32_t {
-  HttpRequestBody = 0,       // During the onLog callback these are immutable
-  HttpResponseBody = 1,      // During the onLog callback these are immutable
-  NetworkDownstreamData = 2, // During the onLog callback these are immutable
-  NetworkUpstreamData = 3,   // During the onLog callback these are immutable
-  HttpCallResponseBody = 4,  // Immutable
-  GrpcReceiveBuffer = 5,     // Immutable
-  VmConfiguration = 6,       // Immutable
-  PluginConfiguration = 7,   // Immutable
-  CallData = 8,              // Immutable
+  // HTTP request body bytes. During the `onLog` callback these are immutable.
+  HttpRequestBody = 0,
+  // HTTP response body bytes. During the `onLog` callback these are immutable.
+  HttpResponseBody = 1,
+  // Bytes received from downstream TCP (or TCP-like) sender. During the `onLog`
+  // callback these are immutable.
+  NetworkDownstreamData = 2,
+  // Bytes received from upstream TCP (or TCP-like) sender. During the `onLog`
+  // callback these are immutable.
+  NetworkUpstreamData = 3,
+  // HTTP response body for the response to an HTTP callout. Immutable.
+  HttpCallResponseBody = 4,
+  // Response data for the response to a gRPC callout. Immutable.
+  GrpcReceiveBuffer = 5,
+  // VM configuration data. Immutable.
+  VmConfiguration = 6,
+  // Plugin configuration data. Immutable.
+  PluginConfiguration = 7,
+  // Foreign function call argument data. Immutable.
+  CallData = 8,
   MAX = 8,
 };
+
+// Flags values for `getBufferStatus` hostcall.
 enum class WasmBufferFlags : int32_t {
   // These must be powers of 2.
   EndOfStream = 1,
 };
+
+// Stream type. Corresponds to Proxy-Wasm ABI `proxy_stream_type_t`.
 enum class WasmStreamType : int32_t {
+  // HTTP request.
   Request = 0,
+  // HTTP response.
   Response = 1,
+  // TCP(-like) data from downstream.
   Downstream = 2,
+  // TCP(-like) data from upstream.
   Upstream = 3,
   MAX = 3,
 };
