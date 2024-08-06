@@ -24,7 +24,8 @@ This repository provides the C++ SDK.
 ## Getting started
 
 * Read the [API overview](docs/api_overview.md) to learn about [Proxy-Wasm
-  concepts] and how they are represented in the C++ SDK.
+  concepts](docs/api_overview.md#concepts-and-terminology) and how they are
+  represented in the C++ SDK.
 * View an [example plugin](example/http_wasm_example.cc).
 * Refer to [API documentation](docs/api_overview.md#codemap).
 * [Build](docs/building.md) plugin code.
