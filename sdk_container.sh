@@ -31,6 +31,11 @@ export CC=gcc-7
 export CXX=g++-7
 export CPP=cpp-7
 
+# bazel
+wget https://github.com/bazelbuild/bazelisk/releases/download/v1.10.1/bazelisk-linux-amd64
+chmod +x bazelisk-linux-amd64
+mv bazelisk-linux-amd64 /usr/local/bin/bazel
+
 # get $HOME
 cd
 
