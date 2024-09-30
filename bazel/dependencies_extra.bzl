@@ -13,7 +13,9 @@
 #  limitations under the License.
 
 load("@emsdk//:emscripten_deps.bzl", "emscripten_deps")
+load("@emsdk//:toolchains.bzl", "register_emscripten_toolchains")
 
 # Requires proxy_wasm_cpp_sdk_dependencies() to be loaded first.
 def proxy_wasm_cpp_sdk_dependencies_extra():
     emscripten_deps()
+    register_emscripten_toolchains()
