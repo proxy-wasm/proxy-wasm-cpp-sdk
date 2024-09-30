@@ -20,16 +20,20 @@ set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get upgrade -y
-apt-get install -y --no-install-recommends apt-utils ca-certificates
 apt-get autoremove -y
 apt-get clean
-apt-get install -y --no-install-recommends software-properties-common apt-transport-https git wget curl pkg-config autoconf autotools-dev automake libtool cmake python zlib1g-dev
+apt-get install -y --no-install-recommends ca-certificates git autoconf autotools-dev automake libtool cmake python-is-python3 zlib1g-dev make xz-utils libzstd-dev
 
-# gcc-7
-apt-get install -y --no-install-recommends gcc-7 g++-7 cpp-7
-export CC=gcc-7
-export CXX=g++-7
-export CPP=cpp-7
+# The specific version of GCC does not actually matter as long as it's confirmed to work.
+# That's why we explicitly pin gcc version (in this case to gcc 13) - it's the version
+# which was tested to work.
+apt-get install -y --no-install-recommends gcc-13 g++-13 cpp-13
+export CC=gcc-13
+export CXX=g++-13
+export CPP=cpp-13
+
+NUM_CPUS=$(nproc)
+JOBS=$((NUM_CPUS>1 ? NUM_CPUS-1 : NUM_CPUS))
 
 # get $HOME
 cd
@@ -41,36 +45,43 @@ git checkout v3.9.1
 git submodule update --init --recursive
 ./autogen.sh
 ./configure
-make
+make -j $JOBS
 make check
 make install
 cd
 rm -rf protobuf
 
+# This makes sure that installed dynamic libraries are visible to the dynamic
+# linker, because it seems like make install does not take care of that
+ldconfig
+
 # emscripten
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
-./emsdk update-tags
-./emsdk install 3.1.7
-./emsdk activate 3.1.7
+git checkout 3.1.67
+./emsdk install --shallow 3.1.67
+./emsdk activate 3.1.67
 source ./emsdk_env.sh
 cd
+
+git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
+cd protobuf-wasm
+git checkout v3.9.1
+git submodule update --init --recursive
+./autogen.sh
+emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto"
+emmake make -j $JOBS
+cd
+
+cp protobuf-wasm/src/.libs/libprotobuf-lite.a /sdk/libprotobuf-lite.a
+cp protobuf-wasm/src/.libs/libprotobuf.a /sdk/libprotobuf.a
+rm -rf protobuf-wasm
 
 # abseil (optional)
 git clone https://github.com/abseil/abseil-cpp
 cd abseil-cpp
-git checkout 14550beb3b7b97195e483fb74b5efb906395c31e -b Jul302019 # Jul 30 2019
+git checkout 4447c7562e3bc702ade25105912dce503f0c4010 -b lts20240722 # Abseil LTS release 20240722.0
 emcmake cmake -DCMAKE_CXX_STANDARD=17 "."
-emmake make
+emmake make -j $JOBS
 cd
 
-# WAVM (optional)
-apt-get install -y --no-install-recommends llvm-6.0-dev
-git clone https://github.com/WAVM/WAVM
-cd WAVM
-git checkout 1ec06cd202a922015c9041c5ed84f875453c4dc7 -b Oct152019 # Oct 15 2019
-cmake "."
-make
-make install
-cd
-rm -rf WAVM
