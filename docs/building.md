@@ -163,9 +163,10 @@ sudo make install
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
-./emsdk update-tags
-./emsdk install 3.1.7
-./emsdk activate 3.1.7
+git checkout 3.1.67
+
+./emsdk install 3.1.67
+./emsdk activate 3.1.67
 
 source ./emsdk_env.sh
 ```
@@ -178,21 +179,19 @@ It is possible later versions will work, e.g.
 ./emsdk activate latest
 ```
 
-However 3.1.7 is known to work.
+However 3.1.67 is known to work.
 
 ### Rebuilding the libprotobuf.a files
 
-If want to rebuild the libprotobuf.a files using a version of protobuf prior to
-3.15, see the instructions at https://github.com/kwonoj/protobuf-wasm. Commit
-4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
+To build the protobuf static libraries for use in your proxy-wasm wasm module,
+if you need them, you may use Emscripten in the same way sdk\_container.sh does
+it:
 
 ```bash
 git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
 cd protobuf-wasm
 git checkout v3.9.1
-git clone https://github.com/kwonoj/protobuf-wasm wasm-patches
-cd wasm-patches && git checkout 4bba8b2f38b5004f87489642b6ca4525ae72fe7f && cd ..
-git apply wasm-patches/*.patch
+git submodule update --init --recursive
 ./autogen.sh
 emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto"
 emmake make
