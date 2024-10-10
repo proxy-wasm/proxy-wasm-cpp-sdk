@@ -81,6 +81,7 @@ rm -rf protobuf-wasm
 git clone https://github.com/abseil/abseil-cpp
 cd abseil-cpp
 git checkout 4447c7562e3bc702ade25105912dce503f0c4010 -b lts20240722 # Abseil LTS release 20240722.0
+# TODO -DSTANDALONE_WASM -sSTANDALONE_WASM ?
 emcmake cmake -DCMAKE_CXX_STANDARD=17 "."
 emmake make -j $JOBS
 cd
