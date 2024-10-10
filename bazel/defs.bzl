@@ -95,7 +95,6 @@ def proxy_wasm_cc_binary(
         linkopts = linkopts + [
             "--no-entry",
             "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
-            "-sSTANDALONE_WASM",
             "-sEXPORTED_FUNCTIONS=_malloc",
         ],
         tags = tags + [
