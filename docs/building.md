@@ -75,44 +75,6 @@ docker commit `docker ps -l | grep wasmsdk:v2 | awk '{print $1}'` wasmsdk:v2
 
 This will save time on subsequent compiles.
 
-### Using Abseil from the Docker image
-
-Abseil (optionally) is built in /root/abseil and can be used. Note that the
-Abseil containers (e.g. `absl::flat_hash_set`) exercise many syscalls which are
-not supported. Consequentially individual files should be pulled in which are
-relatively self contained (e.g. `strings`). Example customized Makefile:
-
-```makefile
-PROXY_WASM_CPP_SDK=/sdk
-CPP_API:=${PROXY_WASM_CPP_SDK}
-CPP_CONTEXT_LIB = ${CPP_API}/proxy_wasm_intrinsics.cc
-ABSL = /root/abseil-cpp
-ABSL_CPP = ${ABSL}/absl/strings/str_cat.cc ${ABSL}/absl/strings/str_split.cc ${ABSL}/absl/strings/numbers.cc ${ABSL}/absl/strings/ascii.cc
-
-all: plugin.wasm
-
-%.wasm %.wat: %.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_enums.h ${CPP_API}/proxy_wasm_externs.h ${CPP_API}/proxy_wasm_api.h ${CPP_API}/proxy_wasm_intrinsics.js ${CPP_CONTEXT_LIB}
-        ls /root
-                em++ --no-entry -s EXPORTED_FUNCTIONS=['_malloc'] --std=c++17 -O3 -flto -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js ${ABSL_CPP} $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a -o $*.wasm
-```
-
-Precompiled Abseil libraries are also available, so the above can also be done
-as:
-
-```makefile
-PROXY_WASM_CPP_SDK=/sdk
-CPP_API:=${PROXY_WASM_CPP_SDK}
-CPP_CONTEXT_LIB = ${CPP_API}/proxy_wasm_intrinsics.cc
-ABSL = /root/abseil-cpp
-ABSL_LIBS = ${ABSL}/absl/strings/libabsl_strings.a ${ABSL}/absl/strings/libabsl_strings_internal.a  ${ABSL}/absl/strings/libabsl_str_format_internal.a
-
-all: plugin.wasm
-
-%.wasm %.wat: %.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_enums.h ${CPP_API}/proxy_wasm_externs.h ${CPP_API}/proxy_wasm_api.h ${CPP_API}/proxy_wasm_intrinsics.js ${CPP_CONTEXT_LIB}
-        ls /root
-                em++ --no-entry -s EXPORTED_FUNCTIONS=['_malloc'] --std=c++17 -O3 -flto -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js  $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a ${ABSL_LIBS} -o $*.wasm
-```
-
 ### Ownership of the resulting .wasm files
 
 The compiled files may be owned by root.  To chown them, add the follow lines to
