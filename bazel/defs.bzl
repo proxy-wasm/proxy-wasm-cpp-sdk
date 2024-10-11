@@ -89,10 +89,25 @@ def proxy_wasm_cc_binary(
             "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js",
         ],
         linkopts = linkopts + [
+            # Setting to indicate module is a "reactor library" without a main() entry point:
+            # https://emscripten.org/docs/tools_reference/settings_reference.html#standalone-wasm
             "--no-entry",
+            # File listing additional functions that Emscripten should expect to be implemented by the host:
+            # https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html#implement-c-in-javascript
             "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
+            # Emit Wasm module that can run without JavaScript
             "-sSTANDALONE_WASM",
+            # Give host code access to Emscripten's _malloc() function
             "-sEXPORTED_FUNCTIONS=_malloc",
+            # Allow allocating memory past initial heap size
+            "-sALLOW_MEMORY_GROWTH=1",
+            # Total stack size (fixed). Emscripten default stack size changed from 5MiB to 64KiB in
+            # 3.1.27: https://github.com/emscripten-core/emscripten/blob/main/ChangeLog.md,
+            # https://github.com/emscripten-core/emscripten/pull/18191. We pick 1MiB somewhat
+            # arbitrarily, since it is gives a little more room and is easy to remember.
+            "-sSTACK_SIZE=1MB",
+            # Initial amount of heap memory
+            "-sINITIAL_HEAP=1MB",
         ],
         tags = tags + [
             "manual",
