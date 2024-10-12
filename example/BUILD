@@ -6,6 +6,7 @@ proxy_wasm_cc_binary(
     name = "http_wasm_example.wasm",
     srcs = ["http_wasm_example.cc"],
     copts = ["-std=c++17"],
+    deps = ["@com_google_re2//:re2"],
 )
 
 proxy_wasm_cc_binary(
@@ -13,6 +14,7 @@ proxy_wasm_cc_binary(
     srcs = ["http_wasm_example.cc"],
     copts = ["-std=c++17"],
     protobuf = "lite",
+    deps = ["@com_google_re2//:re2"],
 )
 
 proxy_wasm_cc_binary(
@@ -20,4 +22,5 @@ proxy_wasm_cc_binary(
     srcs = ["http_wasm_example.cc"],
     copts = ["-std=c++17"],
     protobuf = "full",
+    deps = ["@com_google_re2//:re2"],
 )

@@ -31,3 +31,19 @@ def proxy_wasm_cpp_sdk_repositories():
         strip_prefix = "protobuf-3.17.3",
         url = "https://github.com/protocolbuffers/protobuf/releases/download/v3.17.3/protobuf-all-3.17.3.tar.gz",
     )
+
+    maybe(
+        http_archive,
+        name = "com_google_absl",
+        sha256 = "95e90be7c3643e658670e0dd3c1b27092349c34b632c6e795686355f67eca89f",
+        strip_prefix = "abseil-cpp-20240722.0",
+        urls = ["https://github.com/abseil/abseil-cpp/archive/20240722.0.zip"],
+    )
+
+    maybe(
+        http_archive,
+        name = "com_google_re2",
+        sha256 = "18cf85922e27fad3ed9c96a27733037da445f35eb1a2744c306a37c6d11e95c4",
+        strip_prefix = "re2-2023-07-01",
+        url = "https://github.com/google/re2/archive/2023-07-01.tar.gz",
+    )

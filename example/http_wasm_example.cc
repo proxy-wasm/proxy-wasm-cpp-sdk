@@ -15,7 +15,7 @@
 
 #include <string>
 #include <string_view>
-#include <unordered_map>
+#include "re2/re2.h"
 
 #include "proxy_wasm_intrinsics.h"
 
@@ -26,11 +26,14 @@ public:
   bool onStart(size_t) override;
   bool onConfigure(size_t) override;
   void onTick() override;
+
+  std::optional<re2::RE2> path_match;
 };
 
 class ExampleContext : public Context {
 public:
-  explicit ExampleContext(uint32_t id, RootContext *root) : Context(id, root) {}
+  explicit ExampleContext(uint32_t id, RootContext *root)
+      : Context(id, root), root_(static_cast<ExampleRootContext *>(root)) {}
 
   void onCreate() override;
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
@@ -40,6 +43,9 @@ public:
   void onDone() override;
   void onLog() override;
   void onDelete() override;
+
+private:
+  const ExampleRootContext *root_;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
                                                       ROOT_FACTORY(ExampleRootContext),
@@ -62,8 +68,12 @@ bool ExampleRootContext::onStart(size_t) {
 
 bool ExampleRootContext::onConfigure(size_t) {
   LOG_TRACE("onConfigure");
+  // Start a timer.
   proxy_set_tick_period_milliseconds(1000); // 1 sec
-  return true;
+
+  // Compile a regular expression.
+  path_match.emplace("/foo-([^/]+)/");
+  return path_match->ok();
 }
 
 void ExampleRootContext::onTick() { LOG_TRACE("onTick"); }
@@ -77,6 +87,11 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
   for (auto &p : pairs) {
     LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
+  }
+  // Regex.
+  auto path = getRequestHeader(":path");
+  if (path && re2::RE2::FullMatch(path->view(), *root_->path_match)) {
+    sendLocalResponse(403, "", "Access forbidden.", {});
   }
   return FilterHeadersStatus::Continue;
 }
