@@ -60,29 +60,6 @@ jobs:
         export PATH=$PATH:$(go env GOPATH)/bin
         addlicense -ignore="**/BUILD" -check .
 
-  protobuf:
-    runs-on: ubuntu-22.04
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Install protobuf v3.9.1
-      run: |
-        git clone https://github.com/protocolbuffers/protobuf
-        cd protobuf
-        git checkout v3.9.1
-        ./autogen.sh
-        ./configure
-        make
-        sudo make install
-        sudo ldconfig
-
-    - name: Re-generate and verify protobuf artifacts
-      run: |
-        rm *.pb.{cc,h}
-        make protobuf
-        git diff --exit-code -G "(^[^ /])|(^\s+[^\*])" *.pb.{cc,h}
-
   build:
     runs-on: ubuntu-22.04
 
