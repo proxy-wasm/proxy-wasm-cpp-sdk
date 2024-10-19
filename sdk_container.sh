@@ -22,7 +22,7 @@ apt-get update
 apt-get upgrade -y
 apt-get autoremove -y
 apt-get clean
-apt-get install -y --no-install-recommends ca-certificates git autoconf autotools-dev automake libtool cmake python-is-python3 zlib1g-dev make xz-utils libzstd-dev
+apt-get install -y --no-install-recommends ca-certificates git autoconf autotools-dev automake libtool cmake python-is-python3 zlib1g-dev make xz-utils libzstd-dev pkg-config
 
 # The specific version of GCC does not actually matter as long as it's confirmed to work.
 # That's why we explicitly pin gcc version (in this case to gcc 13) - it's the version
@@ -32,57 +32,47 @@ export CC=gcc-13
 export CXX=g++-13
 export CPP=cpp-13
 
-NUM_CPUS=$(nproc)
-JOBS=$((NUM_CPUS>1 ? NUM_CPUS-1 : NUM_CPUS))
-
 # get $HOME
 cd
 
-# specific version of protobufs to match the pre-compiled support libraries
-git clone https://github.com/protocolbuffers/protobuf
-cd protobuf
-git checkout v3.9.1
-git submodule update --init --recursive
-./autogen.sh
-./configure
-make -j $JOBS
-make check
-make install
-cd
-rm -rf protobuf
-
-# This makes sure that installed dynamic libraries are visible to the dynamic
-# linker, because it seems like make install does not take care of that
-ldconfig
-
-# emscripten
+# install emscripten
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 git checkout 3.1.67
 ./emsdk install --shallow 3.1.67
 ./emsdk activate 3.1.67
-source ./emsdk_env.sh
-cd
+cd ..
 
-git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
-cd protobuf-wasm
-git checkout v3.9.1
+# set up build env
+source emsdk/emsdk_env.sh
+CXXFLAGS="--std=c++17 -O3 -flto -DSTANDALONE_WASM"
+NUM_CPUS=$(nproc)
+JOBS=$((NUM_CPUS>1 ? NUM_CPUS-1 : NUM_CPUS))
+
+# protobuf (optional, includes abseil)
+git clone https://github.com/protocolbuffers/protobuf
+cd protobuf
+git checkout v26.1
 git submodule update --init --recursive
-./autogen.sh
-emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto"
+emcmake cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="$CXXFLAGS" -Dprotobuf_BUILD_TESTS=OFF "."
 emmake make -j $JOBS
-cd
+emmake make install
+cd ..
 
-cp protobuf-wasm/src/.libs/libprotobuf-lite.a /sdk/libprotobuf-lite.a
-cp protobuf-wasm/src/.libs/libprotobuf.a /sdk/libprotobuf.a
-rm -rf protobuf-wasm
+# abseil (optional, and already included in protobuf)
+#git clone https://github.com/abseil/abseil-cpp
+#cd abseil-cpp
+#git checkout 20240722.0
+#emcmake cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="$CXXFLAGS" "."
+#emmake make -j $JOBS
+#emmake make install
+#cd ..
 
-# abseil (optional)
-git clone https://github.com/abseil/abseil-cpp
-cd abseil-cpp
-git checkout 4447c7562e3bc702ade25105912dce503f0c4010 -b lts20240722 # Abseil LTS release 20240722.0
-# TODO -DSTANDALONE_WASM -sSTANDALONE_WASM ?
-emcmake cmake -DCMAKE_CXX_STANDARD=17 "."
+# re2 (optional, depends on installed absl)
+git clone https://github.com/google/re2
+cd re2
+git checkout 2023-07-01
+emcmake cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="$CXXFLAGS" "."
 emmake make -j $JOBS
-cd
-
+emmake make install
+cd ..

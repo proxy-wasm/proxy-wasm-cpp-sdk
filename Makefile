@@ -1,27 +1,57 @@
-CPP_API ?= .
+ifdef NO_CONTEXT
+  CPP_CONTEXT_LIB =
+else
+  CPP_CONTEXT_LIB = ${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics.cc
+endif
 
-all: proxy_wasm_intrinsics.pb.h proxy_wasm_intrinsics_lite.pb.h struct_lite.pb.h ${CPP_API}/libprotobuf.a ${CPP_API}/libprotobuf-lite.a
+PROTOBUF?=none
+ifeq ($(PROTOBUF), full)
+  PROTO_DEPS := protobuf
+  PROTO_OPTS := -DPROXY_WASM_PROTOBUF_FULL=1 \
+		${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics.pb.cc
+else ifeq ($(PROTOBUF), lite)
+  PROTO_DEPS := protobuf-lite
+  PROTO_OPTS := -DPROXY_WASM_PROTOBUF_LITE=1 \
+		${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics_lite.pb.cc \
+		${PROXY_WASM_CPP_SDK}/struct_lite.pb.cc
+else
+  PROTO_DEPS :=
+  PROTO_OPTS :=
+endif
 
-protobuf: proxy_wasm_intrinsics.pb.h proxy_wasm_intrinsics_lite.pb.h struct_lite.pb.h
+# Provide a list of libraries that the wasm depends on (absl_*, re2, etc).
+WASM_DEPS?=absl_base
 
-proxy_wasm_intrinsics.pb.h: proxy_wasm_intrinsics.proto
-	protoc --cpp_out=. proxy_wasm_intrinsics.proto
+# Determine dependency link options.
+# NOTE: Strip out -pthread which RE2 claims to need...
+PKG_CONFIG?=pkg-config
+PKG_CONFIG_PATH=${EMSDK}/upstream/emscripten/cache/sysroot/lib/pkgconfig
+WASM_LIBS=$(shell $(PKG_CONFIG) $(WASM_DEPS) $(PROTO_DEPS) \
+	  --with-path=$(PKG_CONFIG_PATH) --libs | sed -e 's/-pthread //g')
 
-proxy_wasm_intrinsics_lite.pb.h struct_lite.pb.h: proxy_wasm_intrinsics_lite.proto
-	protoc --cpp_out=. -I. proxy_wasm_intrinsics_lite.proto
-	protoc --cpp_out=. struct_lite.proto
+debug-deps:
+	# WASM_DEPS : ${WASM_DEPS}
+	# WASM_LIBS : ${WASM_LIBS}
+	# PROTO_DEPS: ${PROTO_DEPS}
+	# PROTO_OPTS: ${PROTO_OPTS}
 
-${CPP_API}/libprotobuf.a ${CPP_API}/libprotobuf-lite.a:
-	rm -rf protobuf-wasm \
-	&& git clone https://github.com/protocolbuffers/protobuf protobuf-wasm \
-	&& cd protobuf-wasm \
-	&& git checkout v3.9.1 \
-	&& ./autogen.sh \
-	&& emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto" \
-	&& emmake make \
-	&& cd .. \
-	&& cp protobuf-wasm/src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a \
-	&& cp protobuf-wasm/src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
+# TODO(martijneken): Add Emscripten stack/heap size params.
+%.wasm %.wat: %.cc
+	em++ --no-entry -sSTANDALONE_WASM -sEXPORTED_FUNCTIONS=_malloc \
+		--std=c++17 -O3 -flto \
+		--js-library ${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics.js \
+		-I${PROXY_WASM_CPP_SDK} \
+		${CPP_CONTEXT_LIB} \
+		${PROTO_OPTS} \
+		${WASM_LIBS} \
+		$*.cc -o $*.wasm
 
 clean:
-	rm -f proxy_wasm_intrinsics.pb.h proxy_wasm_intrinsics_lite.pb.h struct_lite.pb.h ${CPP_API}/libprotobuf.a ${CPP_API}/libprotobuf-lite.a
+	rm *.wasm
+
+# NOTE: How to regenerate .pb.h and .pb.cc files for a protobuf update:
+# - download + extract protobuf release (currently v26.1)
+# - regenerate:
+#   ./bin/protoc --cpp_out=../ -I../ -Iinclude/google/protobuf/ ../struct_lite.proto
+#   ./bin/protoc --cpp_out=../ -I../ -Iinclude/google/protobuf/ ../proxy_wasm_intrinsics_lite.proto
+#   ./bin/protoc --cpp_out=../ -I../ -Iinclude/google/protobuf/ ../proxy_wasm_intrinsics.proto

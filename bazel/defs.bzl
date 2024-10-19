@@ -16,14 +16,11 @@ load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 def _optimized_wasm_cc_binary_transition_impl(settings, attr):
-    # TODO(PiotrSikora): Add -flto to copts/linkopts when fixed in emsdk.
-    # See: https://github.com/emscripten-core/emsdk/issues/971
-    #
     # Define STANDALONE_WASM at compile time as well as link time (below).
     # This fixes Abseil by not including Emscripten JS stacktraces + symbolization.
     # TODO(martijneken): Remove after Abseil stops using this define.
     return {
-        "//command_line_option:copt": ["-O3", "-DSTANDALONE_WASM"],
+        "//command_line_option:copt": ["-O3", "-flto", "-DSTANDALONE_WASM"],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
         "//command_line_option:collect_code_coverage": False,
@@ -95,6 +92,7 @@ def proxy_wasm_cc_binary(
         linkopts = linkopts + [
             "--no-entry",
             "--js-library=$(location @proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_js)",
+            "-sSTANDALONE_WASM",
             "-sEXPORTED_FUNCTIONS=_malloc",
         ],
         tags = tags + [

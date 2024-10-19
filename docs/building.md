@@ -1,8 +1,8 @@
 # Proxy-Wasm C++ SDK Build Instructions
 
 The C++ SDK has dependencies on specific versions of the C++ WebAssembly
-toolchain [Emscripten](https://emscripten.org) and the protobuf library,
-therefore use of a Docker image is recommended.
+toolchain [Emscripten](https://emscripten.org). Use of a Docker image is
+recommended to achieve repeatable builds and save work.
 
 ## Docker
 
@@ -11,7 +11,7 @@ A Dockerfile for the C++ SDK is provided in [Dockerfile-sdk](../Dockerfile-sdk).
 It can built in this repository's root directory by:
 
 ```bash
-docker build -t wasmsdk:v2 -f Dockerfile-sdk .
+docker build -t wasmsdk:v3 -f Dockerfile-sdk .
 ```
 
 The docker image can be used for compiling C++ plugin code into Wasm modules.
@@ -23,12 +23,10 @@ Create a directory with your source files and a Makefile:
 ```makefile
 PROXY_WASM_CPP_SDK=/sdk
 
-all: myproject.wasm
-
-include ${PROXY_WASM_CPP_SDK}/Makefile.base_lite
+include ${PROXY_WASM_CPP_SDK}/Makefile
 ```
 
-Source file (myproject.cc):
+Create a C++ source file (myproject.cc):
 
 ```c++
 #include <string>
@@ -57,10 +55,26 @@ void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
 
 ### Compiling with the Docker build image
 
-Run docker:
+Run docker to build wasm, using a target with a .wasm suffix:
 
 ```bash
-docker run -v $PWD:/work -w /work  wasmsdk:v2 /build_wasm.sh
+docker run -v $PWD:/work -w /work wasmsdk:v3 /build_wasm.sh myproject.wasm
+```
+
+You can specify wasm dependencies via these Makefile variables:
+
+-   PROTOBUF = {full, lite, none}
+-   WASM_DEPS = list of libraries
+
+For example:
+
+```makefile
+PROXY_WASM_CPP_SDK=/sdk
+
+PROTOBUF=lite
+WASM_DEPS=re2 absl_strings
+
+include ${PROXY_WASM_CPP_SDK}/Makefile
 ```
 
 ### Caching the standard libraries
@@ -70,7 +84,7 @@ cache these in the docker image, after the first successful compilation (e.g
 myproject.cc above), commit the image with the standard libraries:
 
 ```bash
-docker commit `docker ps -l | grep wasmsdk:v2 | awk '{print $1}'` wasmsdk:v2
+docker commit `docker ps -l | grep wasmsdk:v3 | awk '{print $1}'` wasmsdk:v3
 ```
 
 This will save time on subsequent compiles.
@@ -86,48 +100,32 @@ PROXY_WASM_CPP_SDK=/sdk
 all: myproject.wasm
   chown ${uid}.${gid} $^
 
-include ${PROXY_WASM_CPP_SDK}/Makefile.base_lite
+include ${PROXY_WASM_CPP_SDK}/Makefile
 ```
 
 Invocation file (e.g. build.sh):
 
 ```bash
 #!/bin/bash
-docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v2 /build_wasm.sh
+docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v3 /build_wasm.sh
 ```
 
 ## Dependencies for building Wasm modules:
 
 If you do not wish to use the Docker image, the dependencies can be installed by
-script (sdk\_container.sh), or by hand.
-
-### protobuf v3.9.1
-
-You must install the version of protobuf on your build system that matches the
-libprotobuf.a files (without any patches) so that the generated code matches the
-.a library.  Currently this is based on tag v3.9.1 of
-https://github.com/protocolbuffers/protobuf.
-
-```bash
-git clone https://github.com/protocolbuffers/protobuf
-cd protobuf
-git checkout v3.9.1
-git submodule update --init --recursive
-./autogen.sh
-./configure
-make
-make check
-sudo make install
-```
+script (sdk\_container.sh), or by hand. First you need Emscripten to build
+everything else. Then you can build other wasm-compatible libraries, such as
+protobuf, abseil, and RE2.
 
 ### Emscripten
+
+Version 3.1.67 is known to work:
 
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 git checkout 3.1.67
-
-./emsdk install 3.1.67
+./emsdk install --shallow 3.1.67
 ./emsdk activate 3.1.67
 
 source ./emsdk_env.sh
@@ -140,26 +138,3 @@ It is possible later versions will work, e.g.
 ./emsdk install latest
 ./emsdk activate latest
 ```
-
-However 3.1.67 is known to work.
-
-### Rebuilding the libprotobuf.a files
-
-To build the protobuf static libraries for use in your proxy-wasm wasm module,
-if you need them, you may use Emscripten in the same way sdk\_container.sh does
-it:
-
-```bash
-git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
-cd protobuf-wasm
-git checkout v3.9.1
-git submodule update --init --recursive
-./autogen.sh
-emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto"
-emmake make
-cd ..
-cp protobuf-wasm/src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a
-cp protobuf-wasm/src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
-```
-
-Note: ensure /usr/local/bin is in your path.
