@@ -4,7 +4,7 @@ else
   CPP_CONTEXT_LIB = ${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics.cc
 endif
 
-PROTOBUF?=none
+PROTOBUF ?= none
 ifeq ($(PROTOBUF), full)
   PROTO_DEPS := protobuf
   PROTO_OPTS := -DPROXY_WASM_PROTOBUF_FULL=1 \
@@ -20,13 +20,13 @@ else
 endif
 
 # Provide a list of libraries that the wasm depends on (absl_*, re2, etc).
-WASM_DEPS?=absl_base
+WASM_DEPS ?=
 
 # Determine dependency link options.
 # NOTE: Strip out -pthread which RE2 claims to need...
-PKG_CONFIG?=pkg-config
-PKG_CONFIG_PATH=${EMSDK}/upstream/emscripten/cache/sysroot/lib/pkgconfig
-WASM_LIBS=$(shell $(PKG_CONFIG) $(WASM_DEPS) $(PROTO_DEPS) \
+PKG_CONFIG ?= pkg-config
+PKG_CONFIG_PATH = ${EMSDK}/upstream/emscripten/cache/sysroot/lib/pkgconfig
+WASM_LIBS = $(shell $(PKG_CONFIG) $(WASM_DEPS) $(PROTO_DEPS) \
 	  --with-path=$(PKG_CONFIG_PATH) --libs | sed -e 's/-pthread //g')
 
 debug-deps:
@@ -35,7 +35,7 @@ debug-deps:
 	# PROTO_DEPS: ${PROTO_DEPS}
 	# PROTO_OPTS: ${PROTO_OPTS}
 
-# TODO(martijneken): Add Emscripten stack/heap size params.
+# TODO(mpwarres): Add Emscripten stack/heap size params in PR#174.
 %.wasm %.wat: %.cc
 	em++ --no-entry -sSTANDALONE_WASM -sEXPORTED_FUNCTIONS=_malloc \
 		--std=c++17 -O3 -flto \
