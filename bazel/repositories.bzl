@@ -24,12 +24,21 @@ def proxy_wasm_cpp_sdk_repositories():
         url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.67.tar.gz",
     )
 
+    # protobuf depends on rules_python py_repositories
+    maybe(
+        http_archive,
+        name = "rules_python",
+        sha256 = "778aaeab3e6cfd56d681c89f5c10d7ad6bf8d2f1a72de9de55b23081b2d31618",
+        strip_prefix = "rules_python-0.34.0",
+        url = "https://github.com/bazelbuild/rules_python/releases/download/0.34.0/rules_python-0.34.0.tar.gz",
+    )
+
     maybe(
         http_archive,
         name = "com_google_protobuf",
-        sha256 = "77ad26d3f65222fd96ccc18b055632b0bfedf295cb748b712a98ba1ac0b704b2",
-        strip_prefix = "protobuf-3.17.3",
-        url = "https://github.com/protocolbuffers/protobuf/releases/download/v3.17.3/protobuf-all-3.17.3.tar.gz",
+        sha256 = "4fc5ff1b2c339fb86cd3a25f0b5311478ab081e65ad258c6789359cd84d421f8",
+        strip_prefix = "protobuf-26.1",
+        url = "https://github.com/protocolbuffers/protobuf/releases/download/v26.1/protobuf-26.1.tar.gz",
     )
 
     maybe(
