@@ -14,8 +14,10 @@
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 load("@emsdk//:deps.bzl", emsdk_deps = "deps")
+load("@rules_python//python:repositories.bzl", "py_repositories")
 
 # Requires proxy_wasm_cpp_sdk_repositories() to be loaded first.
 def proxy_wasm_cpp_sdk_dependencies():
+    py_repositories()
     protobuf_deps()
     emsdk_deps()
