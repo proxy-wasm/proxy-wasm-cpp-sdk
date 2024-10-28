@@ -275,16 +275,11 @@ proxy_on_foreign_function(uint32_t context_id, uint32_t foreign_function_id, uin
 // Patch an Emscripten gap: https://github.com/emscripten-core/emscripten/issues/22782
 // Implement getentropy for RNG support (e.g. for absl::random).
 
-int32_t __imported_wasi_snapshot_preview1_random_get(int32_t arg0, int32_t arg1)
-    __attribute__((__import_module__("wasi_snapshot_preview1"), __import_name__("random_get")));
-
 typedef uint16_t __wasi_errno_t;
 typedef size_t __wasi_size_t;
 
-__wasi_errno_t __wasi_random_get(uint8_t *buf, __wasi_size_t buf_len) {
-  int32_t ret = __imported_wasi_snapshot_preview1_random_get((int32_t)buf, (int32_t)buf_len);
-  return (uint16_t)ret;
-}
+__wasi_errno_t __wasi_random_get(uint8_t *buf, __wasi_size_t buf_len)
+    __attribute__((__import_module__("wasi_snapshot_preview1"), __import_name__("random_get")));
 
 extern "C" int getentropy(void *buffer, size_t len) {
   if (len > 256) {
