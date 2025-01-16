@@ -34,3 +34,20 @@ proxy_wasm_cc_binary(
     copts = ["-std=c++17"],
     protobuf = "full",
 )
+
+cc_library(
+    name = "http_cache_filter_lib",
+    srcs = ["http_cache_filter.cc"],
+    hdrs = ["memory_cache.h"],
+    deps = [
+        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",  # Add the necessary dependency for proxy_wasm_intrinsics.h
+    ],
+)
+
+proxy_wasm_cc_binary(
+    name = "http_cache_filter.wasm",
+    srcs = ["http_cache_filter.cc"],
+    deps = [
+        ":http_cache_filter_lib",
+    ], 
+)

@@ -45,6 +45,13 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+cc_library(
+    name = "proxy_wasm_cache",
+    hdrs = ["ttl_cache.h"],
+    copts = ["-std=c++17"],
+    visibility = ["//visibility:public"],
+)
+
 cc_proto_library(
     name = "proxy_wasm_intrinsics_cc_proto",
     deps = [":proxy_wasm_intrinsics_proto"],
