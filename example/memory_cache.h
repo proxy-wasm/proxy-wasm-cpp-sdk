@@ -10,6 +10,11 @@
 
 namespace memory_cache {
 
+struct CacheItem {
+        uint16_t value;
+        std::chrono::steady_clock::time_point expiration_time;
+    };
+
 /**
   A simple in-memory cache class with TTL.
   It restricts stored values to 16-bit unsigned integers. This also makes it memory efficient.
@@ -18,7 +23,18 @@ class MemoryCache {
 public:
     // By default, TTL will be 86400 seconds (1 day).
     MemoryCache(std::size_t max_size, int default_ttl_seconds = 86400)
-        : max_cache_size(max_size), default_ttl_seconds(default_ttl_seconds) {}
+        : max_cache_size(max_size), default_ttl_seconds(default_ttl_seconds) {
+
+          // Perf test
+          for (int i = 0; i < max_size; ++i) {
+            std::string key = generateKey(i);
+            //CacheItem item = {static_cast<uint16_t>(200), std::chrono::steady_clock::now() + std::chrono::seconds(default_ttl_seconds)};
+            Insert(key, 200, -1); // Assuming MemoryCache has an insert method
+        }
+
+        LOG_INFO("Inserted 1 million objects into the cache");
+
+        }
 
 std::string serialize(const CacheItem& item) {
     // Example: value|expiration_time
@@ -34,21 +50,22 @@ CacheItem deserialize(const std::string_view& data) {
 }
 
     bool Insert(const std::string& key, uint16_t value, int ttl_seconds = -1) {
-        std::lock_guard<std::mutex> lock(safe_op);
+        //std::lock_guard<std::mutex> lock(safe_op);
         if (ttl_seconds == -1) {
             ttl_seconds = default_ttl_seconds;
         }
 
         // TODO: Add 5% jitter to TTL
-        //std::uniform_real_distribution<double> distribution(-0.05, 0.05);
-        //double jitter_factor = distribution(random_generator);
-        //auto jittered_ttl = std::chrono::seconds(ttl_seconds) +
-        //                std::chrono::seconds(static_cast<int>(ttl_seconds * jitter_factor));
-        // auto expiration_time = time_source_.monotonicTime() + jittered_ttl;
-
+/*        std::uniform_real_distribution<double> distribution(-0.05, 0.05);
+        double jitter_factor = distribution(random_generator);
+        auto jittered_ttl = std::chrono::seconds(ttl_seconds) +
+                        std::chrono::seconds(static_cast<int>(ttl_seconds * jitter_factor));
+         auto expiration_time = time_source_.monotonicTime() + jittered_ttl;
+*/
         auto expiration_time = std::chrono::steady_clock::now() + std::chrono::seconds(ttl_seconds);
         CacheItem item = {value, expiration_time};
         
+        // TODO: implement eviction
         /*auto it = cache_items_map.find(key.c_str());
         if (it == cache_items_map.end()) {
             if (cache_items_map.size() >= max_cache_size) {
@@ -67,7 +84,7 @@ CacheItem deserialize(const std::string_view& data) {
     }
 
     bool Erase(const std::string &key) {
-        std::lock_guard<std::mutex> lock(safe_op);
+        //std::lock_guard<std::mutex> lock(safe_op);
         auto it = cache_items_map.find(key.c_str());
         if (it != cache_items_map.end()) {
             //free(const_cast<char*>(it->first));
@@ -78,31 +95,28 @@ CacheItem deserialize(const std::string_view& data) {
     }
 
     std::optional<uint16_t> Get(const std::string &key) {
-        std::lock_guard<std::mutex> lock(safe_op);
-        auto it = cache_items_map.find(key.c_str());
-
-        if (it != cache_items_map.end()) {
-            if (std::chrono::steady_clock::now() < it->second.expiration_time) {
-                return it->second.value;
-            } else {
-                std::cout << "Item " << key << " has expired" << std::endl;
-                // Item has expired
-                //free(const_cast<char*>(it->first));
-                cache_items_map.erase(it);
-            } 
+        //std::lock_guard<std::mutex> lock(safe_op);
+        uint32_t cas = 0;
+        WasmDataPtr value;
+        auto result = getSharedData(key, &value, &cas);
+    if (result == WasmResult::Ok) {
+        CacheItem item = deserialize(value->toString());
+        if (std::chrono::steady_clock::now() < item.expiration_time) {
+            return item.value;
         } else {
-            std::cout << "Key not found: " << key << std::endl;
-            std::cout << "Current cache items:" << std::endl;
-            for (const auto& pair : cache_items_map) {
-                std::cout << "Key: " << pair.first << ", Value: " << pair.second.value << std::endl;
-            }
+            std::cout << "Item " << key << " has expired" << std::endl;
+            // Item has expired
+            Erase(key);
         }
+    } else {
+        std::cout << "Key not found: " << key << std::endl;
+    }
 
         return std::nullopt;
     }
 
     size_t Size() const {
-        std::lock_guard<std::mutex> lock(safe_op);
+        //std::lock_guard<std::mutex> lock(safe_op);
         return cache_items_map.size();
     }
 
@@ -113,10 +127,11 @@ CacheItem deserialize(const std::string_view& data) {
     }
 
 private:
-    struct CacheItem {
-        uint16_t value;
-        std::chrono::steady_clock::time_point expiration_time;
-    };
+    std::string generateKey(int counter) {
+        char buffer[33];
+        snprintf(buffer, sizeof(buffer), "v2_%032x", counter);
+        return std::string(buffer);
+    }
 
     void Evict() {
         // TODO: implement more sophisticated eviction policy
@@ -146,7 +161,7 @@ private:
     std::unordered_map<const char*, CacheItem, CharPtrHash, CharPtrEqual> cache_items_map;
     std::size_t max_cache_size;
     int default_ttl_seconds;
-    mutable std::mutex safe_op;
+    //mutable std::mutex safe_op;
 };
 
 } // namespace memory_cache

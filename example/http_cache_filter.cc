@@ -34,7 +34,7 @@ public:
   //void onTick() override;
 
   MemoryCache& getCache() {
-    static std::shared_ptr<MemoryCache> cache_instance = std::make_shared<MemoryCache>(100, 30);
+    static std::shared_ptr<MemoryCache> cache_instance = std::make_shared<MemoryCache>(100, 3600);
     LOG_INFO("Address of cache_: " + std::to_string(reinterpret_cast<uintptr_t>(cache_instance.get())));
     return *cache_instance;
   }
@@ -62,13 +62,14 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
                                                       ROOT_FACTORY(ExampleRootContext));
 
 bool ExampleRootContext::onStart(size_t) {
-  LOG_TRACE("onStart");
+  LOG_INFO("onStart");
   return true;
 }
 
 bool ExampleRootContext::onConfigure(size_t) {
-  LOG_TRACE("onConfigure");
-  proxy_set_tick_period_milliseconds(1000); // 1 sec
+  LOG_INFO("onConfigure");
+  // proxy_set_tick_period_milliseconds(1000); // 1 sec
+
   return true;
 }
 
@@ -77,20 +78,13 @@ bool ExampleRootContext::onConfigure(size_t) {
 
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   LOG_INFO(std::string("onRequestHeaders ") + std::to_string(id()));
-  /*auto result = getRequestHeaderPairs();
-  auto pairs = result->pairs();
-  LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
-  for (auto &p : pairs) {
-    LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-  }*/
-  replaceRequestHeader("x-skip-ext-authz", "false");
-
-
   // Store the x-verkada-auth header value
   auto auth_header = getRequestHeader("x-verkada-auth");
+  // Make call to vauth
   if (auth_header) {
     auth_key_ = auth_header->toString();
-    
+    LOG_INFO("auth_key_: " + auth_key_);
+
     // Check cache
     auto* root_context = static_cast<ExampleRootContext*>(root());
     auto& cache = root_context->getCache();
@@ -99,14 +93,52 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     auto cached_value = cache.Get(auth_key_.c_str());
     if (cached_value) {
       LOG_INFO("Cache hit for key: " + auth_key_ + ", cached status: " + std::to_string(*cached_value));
-      
-      // Set the cached status as the response header
-      addResponseHeader(":status", std::to_string(*cached_value));
-      replaceRequestHeader("x-skip-ext-authz", "true");
-
+      //addResponseHeader(":status", std::to_string(*cached_value));
       return FilterHeadersStatus::Continue;
     } else {
       LOG_INFO("Cache miss for key: " + auth_key_);    }
+  
+    // Prepare headers for the POST request
+    //std::string uri = "https://vauth.staging.vcamera.net/auth/tokeninfo";
+    std::string uri = "http://127.0.0.1:8081/auth/tokeninfo";
+    std::string body = "{}";
+    std::vector<std::pair<std::string, std::string>> headers = {
+      {":method", "POST"},
+      {":path", "/auth/tokeninfo"},
+  {":authority", "127.0.0.1:8081"},
+  {":host", "127.0.0.1"},
+      {"Content-Type", "application/json"},
+      {"x-verkada-auth", auth_key_},
+    };
+
+    // Make the POST request
+    // Make the POST request
+    auto result = root()->httpCall(
+      "ext_authz_cluster", // Cluster name defined in Envoy configuration
+      headers,
+      body,
+      {}, // No request trailers
+      5000, // Timeout in milliseconds
+      [this](uint32_t response_code, size_t body_size, uint32_t num_trailers) {
+        // Handle the response
+        LOG_INFO("Received response with status code: " + std::to_string(response_code));
+        
+        auto response_body = getBufferBytes(WasmBufferType::HttpCallResponseBody, 0, body_size);
+        if (response_body) {
+          LOG_INFO("Response body: " + response_body->toString());
+        } else {
+          LOG_ERROR("Failed to retrieve response body");
+        }
+
+        // TODO: cache the response!
+      }
+    );
+
+    // Log the result of the httpCall
+    if (result != WasmResult::Ok) {
+      LOG_ERROR("Failed to initiate the POST request, result: " + std::to_string(static_cast<int>(result)));
+    }
+
   }
 
   return FilterHeadersStatus::Continue;
@@ -136,15 +168,6 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
     int status = std::stoi(status_code->toString());
     cache.Insert(auth_key_, status);
     LOG_INFO("Caching key: " + auth_key_ + ", status: " + std::to_string(status));
-    // Loop 10 times and get the value from the cache
-  for (int i = 0; i < 10; ++i) {
-    auto cached_value = cache.Get(auth_key_);
-    if (cached_value) {
-      LOG_INFO("Loop " + std::to_string(i) + ": Cache hit for key: " + auth_key_ + ", cached status: " + std::to_string(*cached_value));
-    } else {
-      LOG_INFO("Loop " + std::to_string(i) + ": Cache miss for key: " + auth_key_);
-    }
-  }
   }
 
   return FilterHeadersStatus::Continue;
