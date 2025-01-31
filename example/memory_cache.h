@@ -20,6 +20,19 @@ public:
     MemoryCache(std::size_t max_size, int default_ttl_seconds = 86400)
         : max_cache_size(max_size), default_ttl_seconds(default_ttl_seconds) {}
 
+std::string serialize(const CacheItem& item) {
+    // Example: value|expiration_time
+    return std::to_string(item.value) + "|" + std::to_string(item.expiration_time.time_since_epoch().count());
+}
+
+CacheItem deserialize(const std::string_view& data) {
+    // Example: value|expiration_time
+    size_t delimiter_pos = data.find('|');
+    uint16_t value = std::stoi(std::string(data.substr(0, delimiter_pos)));
+    auto expiration_time = std::chrono::steady_clock::time_point(std::chrono::steady_clock::duration(std::stoll(std::string(data.substr(delimiter_pos + 1)))));
+    return {value, expiration_time};
+}
+
     bool Insert(const std::string& key, uint16_t value, int ttl_seconds = -1) {
         std::lock_guard<std::mutex> lock(safe_op);
         if (ttl_seconds == -1) {
@@ -35,7 +48,8 @@ public:
 
         auto expiration_time = std::chrono::steady_clock::now() + std::chrono::seconds(ttl_seconds);
         CacheItem item = {value, expiration_time};
-        auto it = cache_items_map.find(key.c_str());
+        
+        /*auto it = cache_items_map.find(key.c_str());
         if (it == cache_items_map.end()) {
             if (cache_items_map.size() >= max_cache_size) {
                 Evict();
@@ -44,7 +58,12 @@ public:
         } else {
             cache_items_map[key.c_str()] = item;
         }
-        return true;
+        return true;*/
+
+    std::string serialized_item = serialize(item);
+    uint32_t cas = 0;
+    auto result = setSharedData(key, serialized_item, cas);
+    return result == WasmResult::Ok;        
     }
 
     bool Erase(const std::string &key) {
