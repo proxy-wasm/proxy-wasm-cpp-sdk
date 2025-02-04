@@ -41,6 +41,7 @@ cc_library(
     hdrs = ["memory_cache.h"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",  # Add the necessary dependency for proxy_wasm_intrinsics.h
+        "@nlohmann_json//:json",
     ],
 )
 

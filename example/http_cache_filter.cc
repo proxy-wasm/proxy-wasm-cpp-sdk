@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
 
@@ -22,6 +23,8 @@
 #include "memory_cache.h"
 // Define the TTLCache type using std::string as Key and int as Value with LRU policy
 //using MyTTLCache = TTLCache<std::string, int, caches::LRUCachePolicy>;
+
+using json = nlohmann::json;
 using namespace memory_cache;
 
 class ExampleRootContext : public RootContext {
@@ -34,8 +37,7 @@ public:
   //void onTick() override;
 
   MemoryCache& getCache() {
-    static std::shared_ptr<MemoryCache> cache_instance = std::make_shared<MemoryCache>(100, 3600);
-    LOG_INFO("Address of cache_: " + std::to_string(reinterpret_cast<uintptr_t>(cache_instance.get())));
+    static std::shared_ptr<MemoryCache> cache_instance = std::make_shared<MemoryCache>(1000000, 3600);
     return *cache_instance;
   }
 };
@@ -46,8 +48,8 @@ public:
 
   //void onCreate() override;
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
-  FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
-  FilterHeadersStatus onResponseHeaders(uint32_t headers, bool end_of_stream) override;
+  //FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
+  //FilterHeadersStatus onResponseHeaders(uint32_t headers, bool end_of_stream) override;
   FilterMetadataStatus onResponseMetadata(uint32_t elements) override;
   //FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
   //FilterTrailersStatus onResponseTrailers(uint32_t trailers) override;
@@ -66,10 +68,30 @@ bool ExampleRootContext::onStart(size_t) {
   return true;
 }
 
-bool ExampleRootContext::onConfigure(size_t) {
+bool ExampleRootContext::onConfigure(size_t configuration_size) {
   LOG_INFO("onConfigure");
-  // proxy_set_tick_period_milliseconds(1000); // 1 sec
+  
+  // Get configuration parameters using getBufferBytes
+  /*
+  auto config_buffer = getBufferBytes(WasmBufferType::PluginConfiguration, 0, configuration_size);
+  if (config_buffer) {
+    std::string config_json = config_buffer->toString();
+    LOG_INFO("Configuration: " + config_json);
 
+    // Parse the configuration JSON
+    auto config_obj = json::parse(config_json);
+    host_ = config_obj["host"].get<std::string>();
+    path_ = config_obj["path"].get<std::string>();
+    scheme_ = config_obj["scheme"].get<std::string>();
+
+    LOG_INFO("Host: " + host_);
+    LOG_INFO("Path: " + path_);
+    LOG_INFO("Scheme: " + scheme_);
+  } else {
+    LOG_ERROR("Failed to get configuration");
+    return false;
+  }
+*/
   return true;
 }
 
@@ -77,13 +99,18 @@ bool ExampleRootContext::onConfigure(size_t) {
 //void ExampleContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
 
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
-  LOG_INFO(std::string("onRequestHeaders ") + std::to_string(id()));
+  // LOG_INFO(std::string("onRequestHeaders ") + std::to_string(id()));
   // Store the x-verkada-auth header value
   auto auth_header = getRequestHeader("x-verkada-auth");
-  // Make call to vauth
+
+  // Check if request has auth header
   if (auth_header) {
     auth_key_ = auth_header->toString();
-    LOG_INFO("auth_key_: " + auth_key_);
+
+    if (auth_key_.empty()) {
+      return FilterHeadersStatus::Continue;
+    }
+    LOG_INFO("Retrieved x-verkada-auth header: " + auth_key_);
 
     // Check cache
     auto* root_context = static_cast<ExampleRootContext*>(root());
@@ -92,6 +119,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     // Check if the key is in the cache
     auto cached_value = cache.Get(auth_key_.c_str());
     if (cached_value) {
+      // LOG_INFO("Thread ID: " + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())));
       LOG_INFO("Cache hit for key: " + auth_key_ + ", cached status: " + std::to_string(*cached_value));
       //addResponseHeader(":status", std::to_string(*cached_value));
       return FilterHeadersStatus::Continue;
@@ -99,14 +127,23 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
       LOG_INFO("Cache miss for key: " + auth_key_);    }
   
     // Prepare headers for the POST request
-    //std::string uri = "https://vauth.staging.vcamera.net/auth/tokeninfo";
-    std::string uri = "http://127.0.0.1:8081/auth/tokeninfo";
     std::string body = "{}";
-    std::vector<std::pair<std::string, std::string>> headers = {
+    /*std::vector<std::pair<std::string, std::string>> headers = {
       {":method", "POST"},
       {":path", "/auth/tokeninfo"},
   {":authority", "127.0.0.1:8081"},
   {":host", "127.0.0.1"},
+      {"Content-Type", "application/json"},
+      {"x-verkada-auth", auth_key_},
+    };*/
+
+    // staging2 testing
+    std::vector<std::pair<std::string, std::string>> headers = {
+      {":method", "POST"},
+      {":path", "/auth/tokeninfo"},
+      {":authority", "vauth"},
+      {":host", "vauth"},
+      {":scheme", "http"}, // Set the scheme to https
       {"Content-Type", "application/json"},
       {"x-verkada-auth", auth_key_},
     };
@@ -114,23 +151,34 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     // Make the POST request
     // Make the POST request
     auto result = root()->httpCall(
-      "ext_authz_cluster", // Cluster name defined in Envoy configuration
+      "vauth_cluster", // Cluster name defined in Envoy configuration
       headers,
       body,
       {}, // No request trailers
       5000, // Timeout in milliseconds
-      [this](uint32_t response_code, size_t body_size, uint32_t num_trailers) {
+      [this](uint32_t num_headers, size_t body_size, uint32_t num_trailers) {
         // Handle the response
-        LOG_INFO("Received response with status code: " + std::to_string(response_code));
+        LOG_INFO("Received num_headers: " + std::to_string(num_headers));
         
         auto response_body = getBufferBytes(WasmBufferType::HttpCallResponseBody, 0, body_size);
         if (response_body) {
           LOG_INFO("Response body: " + response_body->toString());
-        } else {
-          LOG_ERROR("Failed to retrieve response body");
         }
 
-        // TODO: cache the response!
+        // Retrieve the status code using getHeaderMapValue
+    auto status_code = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseHeaders, ":status");
+    if (status_code) {
+        LOG_INFO("status_code: " + status_code->toString());
+  
+    auto* root_context = static_cast<ExampleRootContext*>(root());
+    auto& cache = root_context->getCache();
+    cache.Insert(auth_key_, static_cast<uint16_t>(std::stoi(status_code->toString())));
+    //LOG_INFO("Caching key: " + auth_key_ + ", status: " + status_code->toString());
+
+    } else {
+      LOG_ERROR("Failed to retrieve status code");
+    }
+
       }
     );
 
@@ -144,7 +192,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   return FilterHeadersStatus::Continue;
 }
 
-FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
+/*FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
   LOG_WARN(std::string("onResponseHeaders ") + std::to_string(id()));
   
   /*
@@ -153,37 +201,18 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
   LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
   for (auto &p : pairs) {
     LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-  }*/
+  }
   // addResponseHeader("X-Wasm-custom", "FOO");
   // replaceResponseHeader("content-type", "text/plain; charset=utf-8");
   // removeResponseHeader("content-length");
 
-  auto* root_context = static_cast<ExampleRootContext*>(root());
-  auto& cache = root_context->getCache();
-
-  // Cache the result of the next filter (which should be the ext_authz filter)
-  auto status_code = getResponseHeader(":status");
-  LOG_WARN(std::string("status_code: ") + status_code->toString());
-  if (status_code) {
-    int status = std::stoi(status_code->toString());
-    cache.Insert(auth_key_, status);
-    LOG_INFO("Caching key: " + auth_key_ + ", status: " + std::to_string(status));
-  }
-
   return FilterHeadersStatus::Continue;
-}
+}*/
 
   FilterMetadataStatus ExampleContext::onResponseMetadata(uint32_t elements) {
     LOG_WARN(std::string("onResponseMetadata ") + std::to_string(id()) + " elements: " + std::to_string(elements));
     return FilterMetadataStatus::Continue;
   }
-
-FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length,
-                                               bool /* end_of_stream */) {
-  auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
-  LOG_ERROR(std::string("onRequestBody ") + std::string(body->view()));
-  return FilterDataStatus::Continue;
-}
 
 /*FilterDataStatus ExampleContext::onResponseBody(size_t body_buffer_length,
                                                 bool end_of_stream) {
