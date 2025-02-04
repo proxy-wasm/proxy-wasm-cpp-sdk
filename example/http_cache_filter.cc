@@ -50,7 +50,7 @@ public:
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
   //FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   //FilterHeadersStatus onResponseHeaders(uint32_t headers, bool end_of_stream) override;
-  FilterMetadataStatus onResponseMetadata(uint32_t elements) override;
+  //FilterMetadataStatus onResponseMetadata(uint32_t elements) override;
   //FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
   //FilterTrailersStatus onResponseTrailers(uint32_t trailers) override;
   //void onDone() override;
@@ -95,11 +95,8 @@ bool ExampleRootContext::onConfigure(size_t configuration_size) {
   return true;
 }
 
-//void ExampleRootContext::onTick() { LOG_TRACE("onTick"); }
-//void ExampleContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
-
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
-  // LOG_INFO(std::string("onRequestHeaders ") + std::to_string(id()));
+  LOG_INFO(std::string("onRequestHeaders()"));
   // Store the x-verkada-auth header value
   auto auth_header = getRequestHeader("x-verkada-auth");
 
@@ -108,6 +105,9 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     auth_key_ = auth_header->toString();
 
     if (auth_key_.empty()) {
+      // For now, we'll let the request go if it doesn't have x-verkada-auth header.
+      // In the finished state, we should be more strict - if the call is for an authenticated endpoint,
+      // and doesn't have an auth header or an auth cookie, we should terminate the request.
       return FilterHeadersStatus::Continue;
     }
     LOG_INFO("Retrieved x-verkada-auth header: " + auth_key_);
@@ -119,26 +119,17 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     // Check if the key is in the cache
     auto cached_value = cache.Get(auth_key_.c_str());
     if (cached_value) {
-      // LOG_INFO("Thread ID: " + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())));
       LOG_INFO("Cache hit for key: " + auth_key_ + ", cached status: " + std::to_string(*cached_value));
-      //addResponseHeader(":status", std::to_string(*cached_value));
+      // Cache hit means it has successful status. Continue.
       return FilterHeadersStatus::Continue;
-    } else {
-      LOG_INFO("Cache miss for key: " + auth_key_);    }
-  
-    // Prepare headers for the POST request
-    std::string body = "{}";
-    /*std::vector<std::pair<std::string, std::string>> headers = {
-      {":method", "POST"},
-      {":path", "/auth/tokeninfo"},
-  {":authority", "127.0.0.1:8081"},
-  {":host", "127.0.0.1"},
-      {"Content-Type", "application/json"},
-      {"x-verkada-auth", auth_key_},
-    };*/
+    }
 
-    // staging2 testing
-    std::vector<std::pair<std::string, std::string>> headers = {
+    LOG_INFO("Cache miss for key: " + auth_key_);
+  
+    // Prepare headers for the POST request to vtokeninfo / vauth
+    std::string body = "{}";
+
+      std::vector<std::pair<std::string, std::string>> headers = {
       {":method", "POST"},
       {":path", "/auth/tokeninfo"},
       {":authority", "vauth"},
@@ -148,15 +139,22 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
       {"x-verkada-auth", auth_key_},
     };
 
+    // Capture the ID of the current Context (representing the current request)
+    uint32_t context_id = id();
+
     // Make the POST request
-    // Make the POST request
-    auto result = root()->httpCall(
+    auto call_result = root()->httpCall(
       "vauth_cluster", // Cluster name defined in Envoy configuration
       headers,
       body,
       {}, // No request trailers
       5000, // Timeout in milliseconds
-      [this](uint32_t num_headers, size_t body_size, uint32_t num_trailers) {
+      [this, context_id](uint32_t num_headers, size_t body_size, uint32_t num_trailers) {
+        // Switch to the correct context using proxy_set_effective_context
+        // httpCall() is run inside the root context.  But we can't send local response from the root context.
+        // Therefore, we need to switch to the context of the request.
+        proxy_set_effective_context(context_id);
+
         // Handle the response
         LOG_INFO("Received num_headers: " + std::to_string(num_headers));
         
@@ -169,65 +167,44 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     auto status_code = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseHeaders, ":status");
     if (status_code) {
         LOG_INFO("status_code: " + status_code->toString());
-  
+
+        int status_code_int = std::stoi(status_code->toString());
+        if (status_code_int < 200 || status_code_int > 299) {
+          LOG_INFO("Received error status code: " + std::to_string(status_code_int) + ", terminating the stream");
+          sendLocalResponse(status_code_int, "Unauthorized by WASM plugin", "Unauthorized by WASM plugin", {});
+          //LOG_INFO("sendLocalResponse() returned result: " + std::to_string(static_cast<int>(res)));
+          continueRequest();
+          //LOG_INFO("closeRequest() returned result: " + std::to_string(static_cast<int>(res)));
+          return; // return from the Lambda function
+        }
+
+    // Store the status code in the cache
     auto* root_context = static_cast<ExampleRootContext*>(root());
     auto& cache = root_context->getCache();
     cache.Insert(auth_key_, static_cast<uint16_t>(std::stoi(status_code->toString())));
-    //LOG_INFO("Caching key: " + auth_key_ + ", status: " + status_code->toString());
-
-    } else {
+    continueRequest();
+      } else {
       LOG_ERROR("Failed to retrieve status code");
     }
 
       }
-    );
+    ); // closes httpCall()
 
-    // Log the result of the httpCall
-    if (result != WasmResult::Ok) {
-      LOG_ERROR("Failed to initiate the POST request, result: " + std::to_string(static_cast<int>(result)));
+    // Handle error from httpCall()
+    if (call_result != WasmResult::Ok) {
+      LOG_ERROR("Failed to initiate the POST request, result: " + std::to_string(static_cast<int>(call_result)));
+      sendLocalResponse(500, "Failed to initiate POST request", "Failed to initiate POST request", {});
+      return FilterHeadersStatus::ContinueAndEndStream;
     }
 
+    // fall through to the end of this function
+  }  // if (auth_header)
+  else {
+    LOG_INFO("No x-verkada-auth header found");
   }
 
-  return FilterHeadersStatus::Continue;
+  // Return stop iteration because we are waiting for the response from the external auth server.
+  LOG_INFO("Waiting for response from external auth server");
+  //return FilterHeadersStatus::StopAllIterationAndWatermark;
+  return FilterHeadersStatus::StopIteration;
 }
-
-/*FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
-  LOG_WARN(std::string("onResponseHeaders ") + std::to_string(id()));
-  
-  /*
-  auto result = getResponseHeaderPairs();
-  auto pairs = result->pairs();
-  LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
-  for (auto &p : pairs) {
-    LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-  }
-  // addResponseHeader("X-Wasm-custom", "FOO");
-  // replaceResponseHeader("content-type", "text/plain; charset=utf-8");
-  // removeResponseHeader("content-length");
-
-  return FilterHeadersStatus::Continue;
-}*/
-
-  FilterMetadataStatus ExampleContext::onResponseMetadata(uint32_t elements) {
-    LOG_WARN(std::string("onResponseMetadata ") + std::to_string(id()) + " elements: " + std::to_string(elements));
-    return FilterMetadataStatus::Continue;
-  }
-
-/*FilterDataStatus ExampleContext::onResponseBody(size_t body_buffer_length,
-                                                bool end_of_stream) {
-  LOG_WARN(std::string("onResponseBody ") + std::to_string(id()));
-  setBuffer(WasmBufferType::HttpResponseBody, 0, 12, "Hello, world");
-  return FilterDataStatus::Continue;
-}*/
-
-/*FilterTrailersStatus ExampleContext::onResponseTrailers(uint32_t trailers) {
-  LOG_WARN(std::string("onResponseTrailers ") + std::to_string(id()));
-  return FilterTrailersStatus::Continue;
-}*/
-
-//void ExampleContext::onDone() { LOG_WARN(std::string("onDone " + std::to_string(id()))); }
-
-//void ExampleContext::onLog() { LOG_WARN(std::string("onLog " + std::to_string(id()))); }
-
-//void ExampleContext::onDelete() { LOG_WARN(std::string("onDelete " + std::to_string(id()))); }
