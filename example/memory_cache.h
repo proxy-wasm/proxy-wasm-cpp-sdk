@@ -163,14 +163,14 @@ CacheItem deserialize(const std::string_view& data) {
             get_call_count++;
 
             if (get_call_count % 10000 == 0) {
-              LOG_ERROR("Total Get calls: " + std::to_string(get_call_count));
-              LOG_ERROR("Cumulative time (microseconds): " + std::to_string(cumulative_time_microseconds));
-              LOG_ERROR("Average time per Get call (microseconds): " + std::to_string(cumulative_time_microseconds / get_call_count));
+              LOG_INFO("Total Get calls: " + std::to_string(get_call_count));
+              LOG_INFO("Cumulative time (microseconds): " + std::to_string(cumulative_time_microseconds));
+              LOG_INFO("Average time per Get call (microseconds): " + std::to_string(cumulative_time_microseconds / get_call_count));
             }
 
             return item.value;
         } else {
-            //std::cout << "Item " << key << " has expired" << std::endl;
+            LOG_INFO("CacheItem " + key + " has expired");
             // Item has expired
             Erase(key);
         }

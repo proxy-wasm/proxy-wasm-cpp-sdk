@@ -64,12 +64,12 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
                                                       ROOT_FACTORY(ExampleRootContext));
 
 bool ExampleRootContext::onStart(size_t) {
-  LOG_INFO("onStart");
+  LOG_TRACE("onStart");
   return true;
 }
 
 bool ExampleRootContext::onConfigure(size_t configuration_size) {
-  LOG_INFO("onConfigure");
+  LOG_TRACE("onConfigure");
   
   // Get configuration parameters using getBufferBytes
   /*
@@ -96,7 +96,7 @@ bool ExampleRootContext::onConfigure(size_t configuration_size) {
 }
 
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
-  LOG_INFO(std::string("onRequestHeaders()"));
+  LOG_TRACE(std::string("onRequestHeaders()"));
   // Store the x-verkada-auth header value
   auto auth_header = getRequestHeader("x-verkada-auth");
 
@@ -156,8 +156,6 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
         proxy_set_effective_context(context_id);
 
         // Handle the response
-        LOG_INFO("Received num_headers: " + std::to_string(num_headers));
-        
         auto response_body = getBufferBytes(WasmBufferType::HttpCallResponseBody, 0, body_size);
         if (response_body) {
           LOG_INFO("Response body: " + response_body->toString());
@@ -200,11 +198,11 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     // fall through to the end of this function
   }  // if (auth_header)
   else {
-    LOG_INFO("No x-verkada-auth header found");
+    LOG_TRACE("No x-verkada-auth header found");
   }
 
   // Return stop iteration because we are waiting for the response from the external auth server.
-  LOG_INFO("Waiting for response from external auth server");
+  LOG_TRACE("Waiting for response from external auth server");
   //return FilterHeadersStatus::StopAllIterationAndWatermark;
   return FilterHeadersStatus::StopIteration;
 }
