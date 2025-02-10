@@ -47,7 +47,7 @@ public:
   }
 
 private:
-  bool config_monitor_mode_ = false;
+  bool config_monitor_mode_ = true; // Monitor mode by default.
 };
 
 // Type for 128 bit integer to hold the request ID and have the same random number space with UUID.
@@ -61,6 +61,15 @@ struct uint128_t {
        << std::hex << std::setw(16) << std::setfill('0') << low;
     return ss.str();
   }
+};
+
+struct RequestStatus {
+  uint128_t request_id;  
+  std::string uri;
+  std::string token_type;
+  std::string validity;
+  std::string status;
+  bool cached = false;
 };
 
 class ExampleContext : public Context {
@@ -81,9 +90,11 @@ public:
 
   private:
     uint128_t request_id_; // Unique identifier for each request
+    RequestStatus request_status_;
     std::string auth_key_;
     // Function for monitor mode
-    void logMonitor(const std::string&, const std::string&);
+    std::string makeRequestURI();
+    void logMonitor(RequestStatus& request_status);
     bool monitorServerHeaders();
 
     static uint128_t generateRequestId() {
@@ -107,37 +118,34 @@ bool ExampleRootContext::onStart(size_t) {
 
 bool ExampleRootContext::onConfigure(size_t configuration_size) {
   LOG_TRACE("onConfigure");
-  
     // Get configuration parameters using getBufferBytes
   auto config_buffer = getBufferBytes(WasmBufferType::PluginConfiguration, 0, configuration_size);
+  
   if (config_buffer) {
+    
     std::string config_json = config_buffer->toString();
    LOG_TRACE("Configuration: " + config_json);
-
     // Parse the configuration JSON
-    auto config_obj = json::parse(config_json);
-    
+    // "false" in the parse function indicates that we don't want to throw an exception on parse error
+    // because WASM plugin doesn't allow exceptions.
+    auto config_obj = json::parse(config_json, nullptr, false);
+    if (config_obj.is_discarded()) {
+      LOG_ERROR("Failed to parse configuration JSON");
+      return true; // Fail open
+    }
     // Check for the presence of the "monitor_mode" field
     if (config_obj.contains("monitor_mode")) {
       config_monitor_mode_ = config_obj["monitor_mode"].get<bool>();
-    } else {
-      config_monitor_mode_ = false; // Set a default value if the field is not present
     }
     LOG_INFO("monitor_mode: " + std::to_string(config_monitor_mode_));
   } else {
-    LOG_ERROR("Failed to get configuration");
-    return false;
+    LOG_ERROR("Failed to get configuration.  Run it in monitor mode.");
+    return true;
   }
   return true;
 }
 
-// Helper function to log message in monitor mode
-void ExampleContext::logMonitor(const std::string& token_type, const std::string& validity) {
-  auto* root_context = static_cast<ExampleRootContext*>(root());
-  if (!root_context->isMonitorMode()) {
-    return;
-  }
-
+std::string ExampleContext::makeRequestURI() {
   // Retrieve the request URI components
   auto scheme_header = getRequestHeader(":scheme");
   auto host_header = getRequestHeader("Host");
@@ -150,12 +158,25 @@ void ExampleContext::logMonitor(const std::string& token_type, const std::string
   // Construct the full request URI
   std::string request_uri = scheme + "://" + host + path;
 
+  return request_uri;
+}
+
+// Helper function to log message in monitor mode
+void ExampleContext::logMonitor(RequestStatus& request_status) {
+  auto* root_context = static_cast<ExampleRootContext*>(root());
+  if (!root_context->isMonitorMode()) {
+    return;
+  }
+
   // Log format is:
   //   <request_id>
   //   <request_uri>
   //   "x-verkada-auth" "x-verkada-server-auth" "absent" <existence and type of auth token>
   //   "valid" "invalid" <validity of auth token>
-  LOG_INFO("MonitorLog: " + request_id_.toString() + ", " + request_uri + ", " + token_type + ", " + validity);
+  //   "response-status" <status code>
+  //   "cached" "not-cached" <cache status>
+  LOG_INFO("MonitorLog: " + request_status.request_id.toString() + ", " + request_status.uri + ", " + request_status.token_type + ", " + request_status.validity + 
+           ", " + request_status.status + ", " + (request_status.cached ? "cached" : "not-cached"));
 
   return;
 }
@@ -168,14 +189,18 @@ bool ExampleContext::monitorServerHeaders() {
   }
   auto server_auth_jwt_header = getRequestHeader("x-verkada-server-auth-jwt");
   if (server_auth_jwt_header && !server_auth_jwt_header->toString().empty()) {
-    logMonitor("x-verkada-server-auth-jwt", "N/A");
+    request_status_.uri = makeRequestURI();
+    request_status_.token_type = "x-verkada-server-auth-jwt";
+    request_status_.validity = "N/A";
     return true;
   }
 
   // Check for x-verkada-server-auth header
   auto server_auth_header = getRequestHeader("x-verkada-server-auth");
   if (server_auth_header && !server_auth_header->toString().empty()) {
-    logMonitor("x-verkada-server-auth", "N/A"); // Using -1 and false for "N/A"
+    request_status_.uri = makeRequestURI();
+    request_status_.token_type = "x-verkada-server-auth";
+    request_status_.validity = "N/A";
     return true;
   }
   return false;
@@ -198,7 +223,9 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
       // In the finished state, we should be more strict - if the call is for an authenticated endpoint,
       // and doesn't have an auth header or an auth cookie, we should terminate the request.
       if (!monitorServerHeaders()) {
-        logMonitor("absent", "N/A");
+        request_status_.uri = makeRequestURI();
+        request_status_.token_type = "absent";
+        request_status_.validity = "N/A";
       }
 
       return FilterHeadersStatus::Continue;
@@ -213,6 +240,10 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     if (cached_value) {
       LOG_INFO("Cache hit for key: " + auth_key_ + ", cached status: " + std::to_string(*cached_value));
       // Cache hit means it has successful status. Continue.
+      request_status_.uri = makeRequestURI();
+      request_status_.token_type = "x-verkada-auth";
+      request_status_.validity = "valid";
+      request_status_.cached = true;
       return FilterHeadersStatus::Continue;
     }
 
@@ -261,11 +292,12 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
         int status_code_int = std::stoi(status_code->toString());
         if (status_code_int < 200 || status_code_int > 299) {
           LOG_INFO("Received error status code: " + std::to_string(status_code_int) + ", terminating the stream");
-
           
           if (root_context->isMonitorMode()) {
             // In monitor mode, add a monitor log and move on
-            logMonitor("x-verkada-auth", "invalid");
+            request_status_.uri = makeRequestURI();
+            request_status_.token_type = "x-verkada-auth";
+            request_status_.validity = "invalid";
             continueRequest();
           } else {
             // In non-monitor mode, send error as a local response
@@ -277,7 +309,9 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
           return; // return from the Lambda function
         }
 
-        logMonitor("x-verkada-auth", "valid");
+        request_status_.uri = makeRequestURI();
+        request_status_.token_type = "x-verkada-auth";
+        request_status_.validity = "valid";
     // Store the status code in the cache
     auto* root_context = static_cast<ExampleRootContext*>(root());
     auto& cache = root_context->getCache();
@@ -293,8 +327,15 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     // Handle error from httpCall()
     if (call_result != WasmResult::Ok) {
       LOG_ERROR("Failed to initiate the POST request, result: " + std::to_string(static_cast<int>(call_result)));
-      sendLocalResponse(500, "Failed to initiate POST request", "Failed to initiate POST request", {});
-      return FilterHeadersStatus::ContinueAndEndStream;
+      
+      
+      if (root_context->isMonitorMode()) {
+        return FilterHeadersStatus::Continue;
+      } else {
+        // TODO: Decide fail open or fail closed.  Currently, it's fail open.
+        //sendLocalResponse(500, "Failed to initiate POST request", "Failed to initiate POST request", {});
+        return FilterHeadersStatus::Continue;
+      }
     }
 
     // fall through to the end of this function
@@ -314,7 +355,8 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t headers, bool end
   
   auto status_code = getResponseHeader(":status");
   std::string status = status_code ? status_code->toString() : "unknown";
-  logMonitor("response-status", status);
+  request_status_.status = status;
+  logMonitor(request_status_);
   
   return FilterHeadersStatus::Continue;
 }
