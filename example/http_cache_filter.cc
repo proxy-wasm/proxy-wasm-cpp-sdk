@@ -95,7 +95,7 @@ public:
     // Function for monitor mode
     std::string makeRequestURI();
     void logMonitor(RequestStatus& request_status);
-    bool monitorServerHeaders();
+    bool monitorOtherHeaders();
 
     static uint128_t generateRequestId() {
       static std::random_device rd;
@@ -182,27 +182,49 @@ void ExampleContext::logMonitor(RequestStatus& request_status) {
 }
 
 // Returns true if any of the server headers are present
-bool ExampleContext::monitorServerHeaders() {
+bool ExampleContext::monitorOtherHeaders() {
   auto* root_context = static_cast<ExampleRootContext*>(root());
   if (!root_context->isMonitorMode()) {
     return false;
   }
+  
+  request_status_.uri = makeRequestURI();
+  request_status_.validity = "N/A"; // For all headers other than x-verkada-auth, we won't check validity.
+
   auto server_auth_jwt_header = getRequestHeader("x-verkada-server-auth-jwt");
   if (server_auth_jwt_header && !server_auth_jwt_header->toString().empty()) {
-    request_status_.uri = makeRequestURI();
     request_status_.token_type = "x-verkada-server-auth-jwt";
-    request_status_.validity = "N/A";
     return true;
   }
 
   // Check for x-verkada-server-auth header
   auto server_auth_header = getRequestHeader("x-verkada-server-auth");
   if (server_auth_header && !server_auth_header->toString().empty()) {
-    request_status_.uri = makeRequestURI();
     request_status_.token_type = "x-verkada-server-auth";
-    request_status_.validity = "N/A";
     return true;
   }
+
+  // Check for x-verkada-forwarded-auth header
+  auto forwarded_auth_header = getRequestHeader("x-verkada-forwarded-auth");
+  if (forwarded_auth_header && !forwarded_auth_header->toString().empty()) {
+    request_status_.token_type = "x-verkada-forwarded-auth";
+    return true;
+  }
+
+  // Check for auth cookie and auth_live cookie
+  auto cookie_header = getRequestHeader("Cookie");
+  if (cookie_header) {
+    std::string cookies = cookie_header->toString();
+    if (cookies.find("auth=") != std::string::npos) {
+      request_status_.token_type = "auth-cookie";
+      return true;
+    }
+    if (cookies.find("auth_live=") != std::string::npos) {
+      request_status_.token_type = "auth-live-cookie";
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -222,7 +244,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
       // For now, we'll let the request go if it doesn't have x-verkada-auth header.
       // In the finished state, we should be more strict - if the call is for an authenticated endpoint,
       // and doesn't have an auth header or an auth cookie, we should terminate the request.
-      if (!monitorServerHeaders()) {
+      if (!monitorOtherHeaders()) {
         request_status_.uri = makeRequestURI();
         request_status_.token_type = "absent";
         request_status_.validity = "N/A";
