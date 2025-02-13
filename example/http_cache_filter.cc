@@ -56,10 +56,9 @@ struct uint128_t {
   uint64_t low;
 
   std::string toString() const {
-    std::stringstream ss;
-    ss << std::hex << std::setw(16) << std::setfill('0') << high
-       << std::hex << std::setw(16) << std::setfill('0') << low;
-    return ss.str();
+    char buffer[33];
+    snprintf(buffer, sizeof(buffer), "%016llx%016llx", high, low);
+    return std::string(buffer);
   }
 };
 
@@ -253,6 +252,15 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
       return FilterHeadersStatus::Continue;
     }
     LOG_TRACE("Retrieved x-verkada-auth header: " + auth_key_);
+
+    // In monitor mode for production, we don't want to send the request to vtokeninfo.
+    if (root_context->isMonitorMode()) {
+      // In monitor mode, add a monitor log and move on
+      request_status_.uri = makeRequestURI();
+      request_status_.token_type = "x-verkada-auth";
+      request_status_.validity = "N/A";
+      return FilterHeadersStatus::Continue;
+    }
 
     // Check cache
     auto& cache = root_context->getCache();
