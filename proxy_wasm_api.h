@@ -1712,9 +1712,9 @@ struct SimpleHistogram {
 template <typename... Tags> struct Counter : public MetricBase {
   static Counter<Tags...> *New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Counter<Tags...>(std::string_view name, MetricTagDescriptor<Tags>... descriptors)
-      : Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {
-  }
+  template <typename... T>
+  Counter(std::string_view name, MetricTagDescriptor<T>... descriptors)
+      : Counter<T...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleCounter resolve(Tags... f) {
     std::vector<std::string> fields{toString(f)...};
@@ -1763,8 +1763,9 @@ inline Counter<Tags...> *Counter<Tags...>::New(std::string_view name,
 template <typename... Tags> struct Gauge : public MetricBase {
   static Gauge<Tags...> *New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Gauge<Tags...>(std::string_view name, MetricTagDescriptor<Tags>... descriptors)
-      : Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
+  template <typename... T>
+  Gauge(std::string_view name, MetricTagDescriptor<T>... descriptors)
+      : Gauge<T...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleGauge resolve(Tags... f) {
     std::vector<std::string> fields{toString(f)...};
@@ -1809,9 +1810,9 @@ inline Gauge<Tags...> *Gauge<Tags...>::New(std::string_view name,
 template <typename... Tags> struct Histogram : public MetricBase {
   static Histogram<Tags...> *New(std::string_view name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Histogram<Tags...>(std::string_view name, MetricTagDescriptor<Tags>... descriptors)
-      : Histogram<Tags...>(std::string(name),
-                           std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
+  template <typename... T>
+  Histogram(std::string_view name, MetricTagDescriptor<T>... descriptors)
+      : Histogram<T...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleHistogram resolve(Tags... f) {
     std::vector<std::string> fields{toString(f)...};
