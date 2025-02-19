@@ -122,11 +122,11 @@ CacheItem deserialize(const std::string_view& data) {
     cumulative_time_microseconds += duration;
     insert_call_count++;
 
-    if (insert_call_count % 100 == 0) {
-        LOG_ERROR("Total Insert calls: " + std::to_string(insert_call_count));
-        LOG_ERROR("Cumulative time (microseconds): " + std::to_string(cumulative_time_microseconds));
-        LOG_ERROR("Average time per Insert call (microseconds): " + std::to_string(cumulative_time_microseconds / insert_call_count));
-    }
+    /*if (insert_call_count % 100 == 0) {
+        LOG_INFO("Total Insert calls: " + std::to_string(insert_call_count));
+        LOG_INFO("Cumulative time (microseconds): " + std::to_string(cumulative_time_microseconds));
+        LOG_INFO()"Average time per Insert call (microseconds): " + std::to_string(cumulative_time_microseconds / insert_call_count));
+    }*/
 
     return true;
     }

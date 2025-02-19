@@ -12,7 +12,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #include <nlohmann/json.hpp>
 #include <random>
 #include <string>
@@ -20,10 +19,16 @@
 
 #include "proxy_wasm_intrinsics.h"
 
+// For auth bypass check configuration
+#include "AuthConfigCheck.h"
 // For respose cache
 #include "memory_cache.h"
+// For data gathering
+#include "usage_histogram.h"
+
 // Define the TTLCache type using std::string as Key and int as Value with LRU policy
 //using MyTTLCache = TTLCache<std::string, int, caches::LRUCachePolicy>;
+
 
 using json = nlohmann::json;
 using namespace memory_cache;
@@ -31,7 +36,7 @@ using namespace memory_cache;
 class ExampleRootContext : public RootContext {
 public:
   explicit ExampleRootContext(uint32_t id, std::string_view root_id) : 
-             RootContext(id, root_id) {}
+             RootContext(id, root_id), authConfigCheck_(), usageHistogramManager_() {}
 
   bool onStart(size_t) override;
   bool onConfigure(size_t) override;
@@ -46,8 +51,18 @@ public:
     return config_monitor_mode_;
   }
 
+  AuthConfigCheck& getAuthConfigCheck() {
+    return authConfigCheck_;
+  }
+
+  UsageHistogramManager& getUsageHistogramManager() {
+    return usageHistogramManager_;
+  }
+
 private:
   bool config_monitor_mode_ = true; // Monitor mode by default.
+  AuthConfigCheck authConfigCheck_;
+  UsageHistogramManager usageHistogramManager_;
 };
 
 // Type for 128 bit integer to hold the request ID and have the same random number space with UUID.
@@ -68,12 +83,15 @@ struct RequestStatus {
   std::string token_type;
   std::string validity;
   std::string status;
+  bool authenticated_endpoint;
+  int endpoint_id;
   bool cached = false;
 };
 
 class ExampleContext : public Context {
 public:
-  explicit ExampleContext(uint32_t id, RootContext *root) : Context(id, root), request_id_(generateRequestId()) {}
+  explicit ExampleContext(uint32_t id, RootContext *root) : 
+    Context(id, root), request_id_(generateRequestId()) {}
 
   //void onCreate() override;
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
@@ -91,6 +109,7 @@ public:
     uint128_t request_id_; // Unique identifier for each request
     RequestStatus request_status_;
     std::string auth_key_;
+    
     // Function for monitor mode
     std::string makeRequestURI();
     void logMonitor(RequestStatus& request_status);
@@ -129,17 +148,15 @@ bool ExampleRootContext::onConfigure(size_t configuration_size) {
     // because WASM plugin doesn't allow exceptions.
     auto config_obj = json::parse(config_json, nullptr, false);
     if (config_obj.is_discarded()) {
-      LOG_ERROR("Failed to parse configuration JSON");
-      return true; // Fail open
+      LOG_ERROR("Failed to parse configuration JSON.");
+    } else {
+      // Check for the presence of the "monitor_mode" field
+      if (config_obj.contains("monitor_mode")) {
+        config_monitor_mode_ = config_obj["monitor_mode"].get<bool>();
+      }
+      LOG_INFO("monitor_mode: " + std::to_string(config_monitor_mode_));
     }
-    // Check for the presence of the "monitor_mode" field
-    if (config_obj.contains("monitor_mode")) {
-      config_monitor_mode_ = config_obj["monitor_mode"].get<bool>();
-    }
-    LOG_INFO("monitor_mode: " + std::to_string(config_monitor_mode_));
-  } else {
-    LOG_ERROR("Failed to get configuration.  Run it in monitor mode.");
-    return true;
+
   }
   return true;
 }
@@ -231,6 +248,17 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   auto* root_context = static_cast<ExampleRootContext*>(root());
 
   LOG_TRACE(std::string("onRequestHeaders()"));
+
+  auto host_header = getRequestHeader("Host");
+  auto path_header = getRequestHeader(":path");
+  std::string host = host_header ? host_header->toString() : "unknown";
+  std::string path = path_header ? path_header->toString() : "/";
+  std::string authenticated_endpoint;
+  auto result = root_context->getAuthConfigCheck().matchRequest(host, path, authenticated_endpoint);
+    LOG_INFO("Auth bypass check result for host: " + host + ", path: " + path + " - HostID: " + std::to_string(result.first) + ", EndPointID: " + std::to_string(result.second) + 
+    ", Authenticated: " + authenticated_endpoint);
+
+  // If I'm in monitor mode, if it's an authenticated endpoint, get the token type and update the histogram.
 
   // Store the x-verkada-auth header value
   auto auth_header = getRequestHeader("x-verkada-auth");

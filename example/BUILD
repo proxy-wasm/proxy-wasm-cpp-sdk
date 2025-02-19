@@ -37,12 +37,14 @@ proxy_wasm_cc_binary(
 
 cc_library(
     name = "http_cache_filter_lib",
-    srcs = ["http_cache_filter.cc"],
-    hdrs = ["memory_cache.h"],
+    srcs = ["http_cache_filter.cc", ],
+    hdrs = ["memory_cache.h", "AuthConfigCheck.h", "auth_bypass_config.h", "usage_histogram.h", ],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",  # Add the necessary dependency for proxy_wasm_intrinsics.h
         "@nlohmann_json//:json",
+        "@com_google_re2//:re2", # RE2 for parsing auth-check-bypass-config.yaml
     ],
+    copts = ["-std=c++17"],  # Enable exceptions
 )
 
 proxy_wasm_cc_binary(
@@ -51,4 +53,5 @@ proxy_wasm_cc_binary(
     deps = [
         ":http_cache_filter_lib",
     ], 
+    copts = ["-std=c++17"],  # Enable exceptions
 )
