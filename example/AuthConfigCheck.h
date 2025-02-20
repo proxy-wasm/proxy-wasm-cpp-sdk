@@ -50,32 +50,26 @@ struct HostConfig {
 class AuthConfigCheck {
 public:
     AuthConfigCheck() {
-        LOG_INFO("AuthConfigCheck() called");
+        //LOG_INFO("AuthConfigCheck() called");
         loadConfig();
     }
 
-    // On match, returns a pair <host ID, endpoint ID>
-    // On no match, resturns a pair <-1, -1>
-    std::pair<int, int> matchRequest(const std::string& host, const std::string& path, std::string& matchType) {
-        LOG_INFO("Matching request: Host = " + host + ", Path = " + path);
+    // On match, returns a pair <host ID, endpoint ID, true>
+    // On no match, resturns a pair <-1, -1, false>
+    std::tuple<int, int, bool> matchRequest(const std::string& host, const std::string& path) {
         for (size_t i = 0; i < hostConfigs.size(); ++i) {
             //std::cout << "Host Pattern: " << hostConfigs[i].host << std::endl;
             if (fnmatch(hostConfigs[i].host.c_str(), host.c_str(), 0) == 0) {
-                LOG_INFO("Host matched: " + hostConfigs[i].host + ", Number of endpoints: " + std::to_string(hostConfigs[i].endpoints.size()));
+                LOG_TRACE("Host matched: " + hostConfigs[i].host + ", Number of endpoints: " + std::to_string(hostConfigs[i].endpoints.size()));
                 for (size_t j = 0; j < hostConfigs[i].endpoints.size(); ++j) {
                     const auto& endpoint = hostConfigs[i].endpoints[j];
-                    LOG_INFO("Trying FullMatch.  path: " + path + ", pattern: " + endpoint.pattern);
                     if (RE2::FullMatch(path, *endpoint.regex)) {  // Using FullMatch with precompiled regex
-                        matchType = endpoint.authenticated ? "authenticated" : "unauthenticated";
-                        //std::cout << "Path fully matched: " << endpoint.pattern << ", Match Type: " << matchType << std::endl;
-                        return {static_cast<int>(i), static_cast<int>(j)};
+                        return {static_cast<int>(i), static_cast<int>(j), false}; // We're only matching unauthenticated endpoints, so match means unauthenticated
                     }
                 }
             }
         }
-        matchType = "no match";
-        //std::cout << "No match found" << std::endl;
-        return {-1, -1};
+        return {-1, -1, true}; // We're only matching unauthenticated endpoints, so no match means authenticated
     }
     
 
@@ -122,7 +116,7 @@ private:
                 iss >> dash >> key >> host;
                 hostConfig.host = host;
                 // std::cout << "Found host: " << hostConfig.host << std::endl;
-                LOG_INFO("Found host: " + hostConfig.host);
+                //LOG_INFO("Found host: " + hostConfig.host);
                 inUnauthenticatedEndpoints = false; // Reset the flag for the new host
                 continue;
             }
@@ -140,7 +134,7 @@ private:
             // Try only remembering the endpoints for unauthenticatedEndpoints
             if (inUnauthenticatedEndpoints && line.find("- /") == 0) {
                 std::string endpoint = line.substr(2); // Remove "- " prefix
-                LOG_INFO("Found endpoint: " + endpoint + ", number: " + std::to_string(hostConfig.endpoints.size()));
+                //LOG_INFO("Found endpoint: " + endpoint + ", number: " + std::to_string(hostConfig.endpoints.size()));
                 hostConfig.endpoints.emplace_back(endpoint, !inUnauthenticatedEndpoints);
                 continue;
             }

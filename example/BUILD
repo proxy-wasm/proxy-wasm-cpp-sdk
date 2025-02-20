@@ -38,7 +38,7 @@ proxy_wasm_cc_binary(
 cc_library(
     name = "http_cache_filter_lib",
     srcs = ["http_cache_filter.cc", ],
-    hdrs = ["memory_cache.h", "AuthConfigCheck.h", "auth_bypass_config.h", "usage_histogram.h", ],
+    hdrs = ["memory_cache.h", "AuthConfigCheck.h", "auth_bypass_config.h", ],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",  # Add the necessary dependency for proxy_wasm_intrinsics.h
         "@nlohmann_json//:json",

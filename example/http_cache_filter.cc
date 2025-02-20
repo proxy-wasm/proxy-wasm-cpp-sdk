@@ -23,12 +23,6 @@
 #include "AuthConfigCheck.h"
 // For respose cache
 #include "memory_cache.h"
-// For data gathering
-#include "usage_histogram.h"
-
-// Define the TTLCache type using std::string as Key and int as Value with LRU policy
-//using MyTTLCache = TTLCache<std::string, int, caches::LRUCachePolicy>;
-
 
 using json = nlohmann::json;
 using namespace memory_cache;
@@ -36,7 +30,9 @@ using namespace memory_cache;
 class ExampleRootContext : public RootContext {
 public:
   explicit ExampleRootContext(uint32_t id, std::string_view root_id) : 
-             RootContext(id, root_id), authConfigCheck_(), usageHistogramManager_() {}
+             RootContext(id, root_id), 
+             total_requests_("total_requests"), 
+              authConfigCheck_() {}
 
   bool onStart(size_t) override;
   bool onConfigure(size_t) override;
@@ -55,14 +51,17 @@ public:
     return authConfigCheck_;
   }
 
-  UsageHistogramManager& getUsageHistogramManager() {
-    return usageHistogramManager_;
+  // accessors for counters
+  Counter<>& getTotalRequestsCounter() {
+    return total_requests_;
   }
 
 private:
   bool config_monitor_mode_ = true; // Monitor mode by default.
   AuthConfigCheck authConfigCheck_;
-  UsageHistogramManager usageHistogramManager_;
+
+  // Using Counter class to track the number of requests
+  Counter<> total_requests_;
 };
 
 // Type for 128 bit integer to hold the request ID and have the same random number space with UUID.
@@ -82,7 +81,7 @@ struct RequestStatus {
   std::string uri;
   std::string token_type;
   std::string validity;
-  std::string status;
+  int status_code;
   bool authenticated_endpoint;
   int endpoint_id;
   bool cached = false;
@@ -95,15 +94,7 @@ public:
 
   //void onCreate() override;
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
-  //FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   FilterHeadersStatus onResponseHeaders(uint32_t headers, bool end_of_stream) override;
-  //FilterMetadataStatus onResponseMetadata(uint32_t elements) override;
-  //FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
-  //FilterTrailersStatus onResponseTrailers(uint32_t trailers) override;
-  //void onDone() override;
-  //void onLog() override;
-  //void onDelete() override;
-  //uint32_t getRequestId() const { return request_id_;
 
   private:
     uint128_t request_id_; // Unique identifier for each request
@@ -184,17 +175,23 @@ void ExampleContext::logMonitor(RequestStatus& request_status) {
     return;
   }
 
-  // Log format is:
-  //   <request_id>
-  //   <request_uri>
-  //   "x-verkada-auth" "x-verkada-server-auth" "absent" <existence and type of auth token>
-  //   "valid" "invalid" <validity of auth token>
-  //   "response-status" <status code>
-  //   "cached" "not-cached" <cache status>
-  LOG_INFO("MonitorLog: " + request_status.request_id.toString() + ", " + request_status.uri + ", " + request_status.token_type + ", " + request_status.validity + 
-           ", " + request_status.status + ", " + (request_status.cached ? "cached" : "not-cached"));
+  // Log only on this condition:
+  // A request is made to an authenticated endpoint with no auth token, or an invalid one.  vShield Plugin would reject it.  But the upstream service actually allows the request.
 
-  return;
+  if (request_status.authenticated_endpoint && 
+      (request_status.token_type == "absent" || request_status.validity == "invalid") && 
+      (request_status.status_code >= 200 && request_status.status_code < 300)) {
+        // Log the request status
+        // Log format is:
+        //   <request_id>
+        //   <request_uri>
+        //   "x-verkada-auth" "x-verkada-server-auth" "absent" <existence and type of auth token>
+        //   "valid" "invalid" <validity of auth token>
+        //   "response-status" <status code>
+        //   "cached" "not-cached" <cache status>
+        LOG_INFO("MonitorLog: " + request_status.request_id.toString() + ", " + request_status.uri + ", " + request_status.token_type + ", " + request_status.validity + 
+                 ", " + std::to_string(request_status.status_code) + ", " + (request_status.cached ? "cached" : "not-cached"));
+  }
 }
 
 // Returns true if any of the server headers are present
@@ -247,48 +244,51 @@ bool ExampleContext::monitorOtherHeaders() {
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   auto* root_context = static_cast<ExampleRootContext*>(root());
 
-  LOG_TRACE(std::string("onRequestHeaders()"));
+  // Add to total number of requests.
+  root_context->getTotalRequestsCounter().increment(1);
 
+  // Auth bypass check
   auto host_header = getRequestHeader("Host");
   auto path_header = getRequestHeader(":path");
   std::string host = host_header ? host_header->toString() : "unknown";
   std::string path = path_header ? path_header->toString() : "/";
-  std::string authenticated_endpoint;
-  auto result = root_context->getAuthConfigCheck().matchRequest(host, path, authenticated_endpoint);
-    LOG_INFO("Auth bypass check result for host: " + host + ", path: " + path + " - HostID: " + std::to_string(result.first) + ", EndPointID: " + std::to_string(result.second) + 
-    ", Authenticated: " + authenticated_endpoint);
+  auto result = root_context->getAuthConfigCheck().matchRequest(host, path);
+    LOG_INFO("Auth bypass check result for host: " + host + ", path: " + path + 
+             " - HostID: " + std::to_string(std::get<0>(result)) 
+             + ", EndPointID: " + std::to_string(std::get<1>(result)) + 
+             ", Authenticated: " + (std::get<2>(result) ? "true" : "false"));
 
-  // If I'm in monitor mode, if it's an authenticated endpoint, get the token type and update the histogram.
+  request_status_.authenticated_endpoint = std::get<2>(result);
+  // If the request is for an unauthenticated endpoint, skip the auth check
+  // TODO: count the number of skips
+  if (request_status_.authenticated_endpoint == false) {
+    return FilterHeadersStatus::Continue;
+  }
 
-  // Store the x-verkada-auth header value
+  // Get x-verkada-auth header value
   auto auth_header = getRequestHeader("x-verkada-auth");
+
+  if (auth_header == nullptr || auth_header->toString().empty()) {
+    // In the finished state, we should be more strict - if the call is for an authenticated endpoint,
+    // and doesn't have an auth header or an auth cookie, we should terminate the request.
+    // For now, we'll let the request go.
+    if (!monitorOtherHeaders()) {
+      request_status_.uri = makeRequestURI();
+      request_status_.token_type = "absent";
+      request_status_.validity = "N/A";
+    }
+
+    return FilterHeadersStatus::Continue;
+  }
 
   // Check if request has auth header
   if (auth_header) {
     auth_key_ = auth_header->toString();
 
-    if (auth_key_.empty()) {
-      // For now, we'll let the request go if it doesn't have x-verkada-auth header.
-      // In the finished state, we should be more strict - if the call is for an authenticated endpoint,
-      // and doesn't have an auth header or an auth cookie, we should terminate the request.
-      if (!monitorOtherHeaders()) {
-        request_status_.uri = makeRequestURI();
-        request_status_.token_type = "absent";
-        request_status_.validity = "N/A";
-      }
-
-      return FilterHeadersStatus::Continue;
-    }
-    LOG_TRACE("Retrieved x-verkada-auth header: " + auth_key_);
-
-    // In monitor mode for production, we don't want to send the request to vtokeninfo.
-    if (root_context->isMonitorMode()) {
-      // In monitor mode, add a monitor log and move on
-      request_status_.uri = makeRequestURI();
-      request_status_.token_type = "x-verkada-auth";
-      request_status_.validity = "N/A";
-      return FilterHeadersStatus::Continue;
-    }
+    // We have x-verkada-auth header.
+    request_status_.uri = makeRequestURI();
+    request_status_.token_type = "x-verkada-auth";
+    request_status_.validity = "N/A";
 
     // Check cache
     auto& cache = root_context->getCache();
@@ -296,7 +296,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     // Check if the key is in the cache
     auto cached_value = cache.Get(auth_key_.c_str());
     if (cached_value) {
-      LOG_INFO("Cache hit for key: " + auth_key_ + ", cached status: " + std::to_string(*cached_value));
+      LOG_TRACE("Cache hit for key: " + auth_key_.substr(0, 4) + ", cached status: " + std::to_string(*cached_value));
       // Cache hit means it has successful status. Continue.
       request_status_.uri = makeRequestURI();
       request_status_.token_type = "x-verkada-auth";
@@ -305,7 +305,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
       return FilterHeadersStatus::Continue;
     }
 
-    LOG_INFO("Cache miss for key: " + auth_key_);
+    LOG_TRACE("Cache miss for key: " + auth_key_.substr(0, 4));
   
     // Prepare headers for the POST request to vtokeninfo / vauth
     std::string body = "{}";
@@ -339,34 +339,36 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
         // Handle the response
         auto response_body = getBufferBytes(WasmBufferType::HttpCallResponseBody, 0, body_size);
         if (response_body) {
-          LOG_INFO("Response body: " + response_body->toString());
+          LOG_TRACE("Response body: " + response_body->toString());
         }
 
         // Retrieve the status code using getHeaderMapValue
     auto status_code = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseHeaders, ":status");
     if (status_code) {
-        LOG_INFO("status_code: " + status_code->toString());
+        LOG_TRACE("status_code: " + status_code->toString());
 
         int status_code_int = std::stoi(status_code->toString());
         if (status_code_int < 200 || status_code_int > 299) {
-          LOG_INFO("Received error status code: " + std::to_string(status_code_int) + ", terminating the stream");
+          
           
           if (root_context->isMonitorMode()) {
+            LOG_INFO("Received error status code: " + std::to_string(status_code_int) + ".  Continue the stream because of monitoring mode.");
             // In monitor mode, add a monitor log and move on
             request_status_.uri = makeRequestURI();
             request_status_.token_type = "x-verkada-auth";
             request_status_.validity = "invalid";
             continueRequest();
           } else {
+            LOG_INFO("Received error status code: " + std::to_string(status_code_int) + ", terminating the stream.");
             // In non-monitor mode, send error as a local response
             sendLocalResponse(status_code_int, "Unauthorized by WASM plugin", "Unauthorized by WASM plugin", {});
             //LOG_INFO("sendLocalResponse() returned result: " + std::to_string(static_cast<int>(res)));
-            continueRequest();
-          //LOG_INFO("closeRequest() returned result: " + std::to_string(static_cast<int>(res)));
+            // No need to call continueRequest() here because sendLocalResponse() already terminated the stream.
           }
           return; // return from the Lambda function
         }
 
+        // vauth / vtokeninfo returned success.  token is valid.
         request_status_.uri = makeRequestURI();
         request_status_.token_type = "x-verkada-auth";
         request_status_.validity = "valid";
@@ -376,7 +378,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     cache.Insert(auth_key_, static_cast<uint16_t>(std::stoi(status_code->toString())));
     continueRequest();
       } else {
-      LOG_ERROR("Failed to retrieve status code");
+      LOG_ERROR("Failed to retrieve status code from vauth / vtokeninfo");
     }
 
       }
@@ -384,7 +386,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
 
     // Handle error from httpCall()
     if (call_result != WasmResult::Ok) {
-      LOG_ERROR("Failed to initiate the POST request, result: " + std::to_string(static_cast<int>(call_result)));
+      LOG_ERROR("Failed to initiate the POST request to vauth / vtokeninfo, result: " + std::to_string(static_cast<int>(call_result)));
       
       
       if (root_context->isMonitorMode()) {
@@ -412,8 +414,7 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t headers, bool end
   LOG_TRACE("onResponseHeaders()");
   
   auto status_code = getResponseHeader(":status");
-  std::string status = status_code ? status_code->toString() : "unknown";
-  request_status_.status = status;
+  request_status_.status_code = status_code ? stoi(status_code->toString()) : 0;
   logMonitor(request_status_);
   
   return FilterHeadersStatus::Continue;
