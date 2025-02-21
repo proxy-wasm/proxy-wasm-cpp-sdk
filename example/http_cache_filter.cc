@@ -241,6 +241,18 @@ bool ExampleContext::monitorOtherHeaders() {
   return false;
 }
 
+// Function to extract the path without query parameters
+std::string removeQueryParamsFromPath(const std::string& full_path) {
+  // Find the position of the '?' character
+  size_t pos = full_path.find('?');
+  if (pos != std::string::npos) {
+    // Return the substring before the '?'
+    return full_path.substr(0, pos);
+  }
+  // If there is no '?', return the full path
+  return full_path;
+}
+
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   auto* root_context = static_cast<ExampleRootContext*>(root());
 
@@ -251,9 +263,13 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   auto host_header = getRequestHeader("Host");
   auto path_header = getRequestHeader(":path");
   std::string host = host_header ? host_header->toString() : "unknown";
-  std::string path = path_header ? path_header->toString() : "/";
+  
+  // If URI is http://localhost/path?query=param, we want to match only "localhost/path" with the auth bypass config.
+  // But "":path" header includes query parameters, causing the match to fail.
+  // Remove query parameters from the path to avoid this.
+  std::string path = path_header ? removeQueryParamsFromPath(path_header->toString()) : "/";
   auto result = root_context->getAuthConfigCheck().matchRequest(host, path);
-    LOG_INFO("Auth bypass check result for host: " + host + ", path: " + path + 
+    LOG_TRACE("Auth bypass check result for host: " + host + ", path: " + path + 
              " - HostID: " + std::to_string(std::get<0>(result)) 
              + ", EndPointID: " + std::to_string(std::get<1>(result)) + 
              ", Authenticated: " + (std::get<2>(result) ? "true" : "false"));
@@ -352,14 +368,14 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
           
           
           if (root_context->isMonitorMode()) {
-            LOG_INFO("Received error status code: " + std::to_string(status_code_int) + ".  Continue the stream because of monitoring mode.");
+            LOG_TRACE("Received error status code: " + std::to_string(status_code_int) + ".  Continue the stream because of monitoring mode.");
             // In monitor mode, add a monitor log and move on
             request_status_.uri = makeRequestURI();
             request_status_.token_type = "x-verkada-auth";
             request_status_.validity = "invalid";
             continueRequest();
           } else {
-            LOG_INFO("Received error status code: " + std::to_string(status_code_int) + ", terminating the stream.");
+            LOG_TRACE("Received error status code: " + std::to_string(status_code_int) + ", terminating the stream.");
             // In non-monitor mode, send error as a local response
             sendLocalResponse(status_code_int, "Unauthorized by WASM plugin", "Unauthorized by WASM plugin", {});
             //LOG_INFO("sendLocalResponse() returned result: " + std::to_string(static_cast<int>(res)));
