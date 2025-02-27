@@ -26,6 +26,9 @@ proxy_wasm_cc_binary(
     srcs = ["http_proto_example.cc"],
     copts = ["-std=c++17"],
     protobuf = "lite",
+    deps = [
+        "@com_google_protobuf//:struct_cc_proto",
+    ],
 )
 
 proxy_wasm_cc_binary(
@@ -33,4 +36,7 @@ proxy_wasm_cc_binary(
     srcs = ["http_proto_example.cc"],
     copts = ["-std=c++17"],
     protobuf = "full",
+    deps = [
+        "@com_google_protobuf//:struct_cc_proto",
+    ],
 )
