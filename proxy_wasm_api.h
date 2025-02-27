@@ -35,6 +35,10 @@
 #include <utility>
 #include <vector>
 
+#include "proxy_wasm_common.h"
+#include "proxy_wasm_enums.h"
+#include "proxy_wasm_externs.h"
+
 // Macro to log a message and abort the plugin if the given value is not
 // `WasmResult::Ok`.
 #define CHECK_RESULT(_c)                                                                           \
