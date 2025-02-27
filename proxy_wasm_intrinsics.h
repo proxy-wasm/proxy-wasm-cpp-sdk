@@ -38,10 +38,8 @@
 #include "proxy_wasm_externs.h"
 #ifdef PROXY_WASM_PROTOBUF_FULL
 #define PROXY_WASM_PROTOBUF 1
-#include "proxy_wasm_intrinsics.pb.h"
 #endif
 #ifdef PROXY_WASM_PROTOBUF_LITE
 #define PROXY_WASM_PROTOBUF 1
-#include "proxy_wasm_intrinsics_lite.pb.h"
 #endif
 #include "proxy_wasm_api.h"
