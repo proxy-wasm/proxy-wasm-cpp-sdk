@@ -29,17 +29,23 @@ PKG_CONFIG_PATH = ${EMSDK}/upstream/emscripten/cache/sysroot/lib/pkgconfig
 WASM_LIBS = $(shell $(PKG_CONFIG) $(WASM_DEPS) $(PROTO_DEPS) \
 	  --with-path=$(PKG_CONFIG_PATH) --libs | sed -e 's/-pthread //g')
 
+# See proxy_wasm_cc_binary build rule definition in bazel/defs.bzl for
+# explanation of emscripten link options.
+EMSCRIPTEN_LINK_OPTS := --no-entry \
+	--js-library ${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics.js \
+	-sSTANDALONE_WASM -sEXPORTED_FUNCTIONS=_malloc \
+	-sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=256KB -sINITIAL_HEAP=1MB
+
+
 debug-deps:
 	# WASM_DEPS : ${WASM_DEPS}
 	# WASM_LIBS : ${WASM_LIBS}
 	# PROTO_DEPS: ${PROTO_DEPS}
 	# PROTO_OPTS: ${PROTO_OPTS}
 
-# TODO(mpwarres): Add Emscripten stack/heap size params in PR#174.
 %.wasm %.wat: %.cc
-	em++ --no-entry -sSTANDALONE_WASM -sEXPORTED_FUNCTIONS=_malloc \
-		--std=c++17 -O3 -flto \
-		--js-library ${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics.js \
+	em++ --std=c++17 -O3 -flto \
+		${EMSCRIPTEN_LINK_OPTS} \
 		-I${PROXY_WASM_CPP_SDK} \
 		${CPP_CONTEXT_LIB} \
 		${PROTO_OPTS} \

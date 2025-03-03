@@ -104,9 +104,10 @@ def proxy_wasm_cc_binary(
             "-sALLOW_MEMORY_GROWTH=1",
             # Total stack size (fixed). Emscripten default stack size changed from 5MiB to 64KiB in
             # 3.1.27: https://github.com/emscripten-core/emscripten/blob/main/ChangeLog.md,
-            # https://github.com/emscripten-core/emscripten/pull/18191. We pick 1MiB somewhat
-            # arbitrarily, since it is gives a little more room and is easy to remember.
-            "-sSTACK_SIZE=1MB",
+            # https://github.com/emscripten-core/emscripten/pull/18191. We pick 256KB as a balance
+            # between reducing memory size and providing more headroom in case of deeper call
+            # stacks. For comparison, the Rust SDK uses 1MB stack by default.
+            "-sSTACK_SIZE=256KB",
             # Initial amount of heap memory
             "-sINITIAL_HEAP=1MB",
         ],
