@@ -1,5 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library")
-load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 licenses(["notice"])  # Apache 2
 
@@ -45,32 +44,14 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-cc_proto_library(
-    name = "proxy_wasm_intrinsics_cc_proto",
-    deps = [":proxy_wasm_intrinsics_proto"],
-)
-
-proto_library(
-    name = "proxy_wasm_intrinsics_proto",
-    srcs = ["proxy_wasm_intrinsics.proto"],
-    deps = [
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:duration_proto",
-        "@com_google_protobuf//:empty_proto",
-        "@com_google_protobuf//:struct_proto",
-    ],
-)
-
 # include lite protobuf support
 cc_library(
     name = "proxy_wasm_intrinsics_lite",
-    hdrs = ["proxy_wasm_intrinsics_lite.h"],
     copts = ["-std=c++17"],
     defines = ["PROXY_WASM_PROTOBUF_LITE"],
     visibility = ["//visibility:public"],
     deps = [
         ":proxy_wasm_intrinsics",
-        ":proxy_wasm_intrinsics_lite_cc_proto",
         "@com_google_protobuf//:protobuf_lite",
     ],
 )
@@ -78,33 +59,12 @@ cc_library(
 # include full protobuf support
 cc_library(
     name = "proxy_wasm_intrinsics_full",
-    hdrs = ["proxy_wasm_intrinsics_full.h"],
     copts = ["-std=c++17"],
     defines = ["PROXY_WASM_PROTOBUF_FULL"],
     visibility = ["//visibility:public"],
     deps = [
         ":proxy_wasm_intrinsics",
-        ":proxy_wasm_intrinsics_cc_proto",
         "@com_google_protobuf//:protobuf",
-    ],
-)
-
-cc_proto_library(
-    name = "proxy_wasm_intrinsics_lite_cc_proto",
-    deps = [":proxy_wasm_intrinsics_lite_proto"],
-)
-
-proto_library(
-    name = "proxy_wasm_intrinsics_lite_proto",
-    srcs = [
-        "proxy_wasm_intrinsics_lite.proto",
-        "struct_lite.proto",
-    ],
-    deps = [
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:duration_proto",
-        "@com_google_protobuf//:empty_proto",
-        "@com_google_protobuf//:struct_proto",
     ],
 )
 

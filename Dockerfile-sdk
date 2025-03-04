@@ -1,6 +1,6 @@
 FROM ubuntu:noble
 
 COPY *.sh /
-COPY *.cc *.h *.js *.proto Makefile* /sdk/
+COPY *.cc *.h *.js Makefile* /sdk/
 
 RUN ./sdk_container.sh

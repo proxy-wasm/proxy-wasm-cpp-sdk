@@ -7,13 +7,10 @@ endif
 PROTOBUF ?= none
 ifeq ($(PROTOBUF), full)
   PROTO_DEPS := protobuf
-  PROTO_OPTS := -DPROXY_WASM_PROTOBUF_FULL=1 \
-		${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics.pb.cc
+  PROTO_OPTS := -DPROXY_WASM_PROTOBUF_FULL=1
 else ifeq ($(PROTOBUF), lite)
   PROTO_DEPS := protobuf-lite
-  PROTO_OPTS := -DPROXY_WASM_PROTOBUF_LITE=1 \
-		${PROXY_WASM_CPP_SDK}/proxy_wasm_intrinsics_lite.pb.cc \
-		${PROXY_WASM_CPP_SDK}/struct_lite.pb.cc
+  PROTO_OPTS := -DPROXY_WASM_PROTOBUF_LITE=1
 else
   PROTO_DEPS :=
   PROTO_OPTS :=
@@ -54,10 +51,3 @@ debug-deps:
 
 clean:
 	rm *.wasm
-
-# NOTE: How to regenerate .pb.h and .pb.cc files for a protobuf update:
-# - download + extract protobuf release (currently v26.1)
-# - regenerate:
-#   ./bin/protoc --cpp_out=../ -I../ -Iinclude/google/protobuf/ ../struct_lite.proto
-#   ./bin/protoc --cpp_out=../ -I../ -Iinclude/google/protobuf/ ../proxy_wasm_intrinsics_lite.proto
-#   ./bin/protoc --cpp_out=../ -I../ -Iinclude/google/protobuf/ ../proxy_wasm_intrinsics.proto

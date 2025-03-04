@@ -56,3 +56,12 @@ def proxy_wasm_cpp_sdk_repositories():
         strip_prefix = "re2-2023-07-01",
         url = "https://github.com/google/re2/archive/2023-07-01.tar.gz",
     )
+
+    # Compile DB dependencies.
+    maybe(
+        http_archive,
+        name = "bazel_compdb",
+        sha256 = "acd2a9eaf49272bb1480c67d99b82662f005b596a8c11739046a4220ec73c4da",
+        strip_prefix = "bazel-compilation-database-40864791135333e1446a04553b63cbe744d358d0",
+        url = "https://github.com/grailbio/bazel-compilation-database/archive/40864791135333e1446a04553b63cbe744d358d0.tar.gz",
+    )
