@@ -14,6 +14,10 @@
 
 #include "proxy_wasm_intrinsics.h"
 
+#ifdef PROXY_WASM_PROTOBUF
+#include "example/example.pb.h"
+#endif
+
 class MyRootContext : public RootContext {
 public:
   explicit MyRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
@@ -23,10 +27,16 @@ public:
     LOG_TRACE("onStart with protobuf (full)");
     google::protobuf::Value value;
     value.set_string_value("unused");
+
+    example::Example example_proto;
+    (*example_proto.mutable_data()->mutable_fields())["key"] = value;
 #elif defined(PROXY_WASM_PROTOBUF_LITE)
     LOG_TRACE("onStart with protobuf (lite)");
     google::protobuf::Value value;
     value.set_string_value("unused");
+
+    example::Example example_proto;
+    (*example_proto.mutable_data()->mutable_fields())["key"] = value;
 #else
     LOG_TRACE("onStart without protobuf");
 #endif
