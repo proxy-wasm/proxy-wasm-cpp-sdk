@@ -7,3 +7,5 @@
 # enables improved Bazel C++ toolchain resolution method that became the
 # default in newer Bazel version and does not cause problems, we keep it.
 build --incompatible_enable_cc_toolchain_resolution
+# Enable Bzlmod for every Bazel command
+common --enable_bzlmod
