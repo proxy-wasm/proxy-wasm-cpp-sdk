@@ -28,31 +28,32 @@ def proxy_wasm_cpp_sdk_repositories():
     maybe(
         http_archive,
         name = "rules_python",
-        sha256 = "778aaeab3e6cfd56d681c89f5c10d7ad6bf8d2f1a72de9de55b23081b2d31618",
-        strip_prefix = "rules_python-0.34.0",
-        url = "https://github.com/bazelbuild/rules_python/releases/download/0.34.0/rules_python-0.34.0.tar.gz",
+        sha256 = "9f9f3b300a9264e4c77999312ce663be5dee9a56e361a1f6fe7ec60e1beef9a3",
+        strip_prefix = "rules_python-1.4.1",
+        url = "https://github.com/bazelbuild/rules_python/releases/download/1.4.1/rules_python-1.4.1.tar.gz",
     )
 
     maybe(
         http_archive,
         name = "com_google_protobuf",
-        sha256 = "4fc5ff1b2c339fb86cd3a25f0b5311478ab081e65ad258c6789359cd84d421f8",
-        strip_prefix = "protobuf-26.1",
-        url = "https://github.com/protocolbuffers/protobuf/releases/download/v26.1/protobuf-26.1.tar.gz",
+        sha256 = "008a11cc56f9b96679b4c285fd05f46d317d685be3ab524b2a310be0fbad987e",
+        strip_prefix = "protobuf-29.3",
+        url = "https://github.com/protocolbuffers/protobuf/releases/download/v29.3/protobuf-29.3.tar.gz",
     )
 
     maybe(
         http_archive,
         name = "com_google_absl",
-        sha256 = "95e90be7c3643e658670e0dd3c1b27092349c34b632c6e795686355f67eca89f",
-        strip_prefix = "abseil-cpp-20240722.0",
-        urls = ["https://github.com/abseil/abseil-cpp/archive/20240722.0.zip"],
+        sha256 = "69909dd729932cbbabb9eeaff56179e8d124515f5d3ac906663d573d700b4c7d",
+        strip_prefix = "abseil-cpp-20240116.2",
+        urls = ["https://github.com/abseil/abseil-cpp/archive/20240116.2.zip"],
     )
 
     maybe(
         http_archive,
         name = "com_google_re2",
-        sha256 = "18cf85922e27fad3ed9c96a27733037da445f35eb1a2744c306a37c6d11e95c4",
-        strip_prefix = "re2-2023-07-01",
-        url = "https://github.com/google/re2/archive/2023-07-01.tar.gz",
+        sha256 = "eb2df807c781601c14a260a507a5bb4509be1ee626024cb45acbd57cb9d4032b",
+        strip_prefix = "re2-2024-07-02",
+        url = "https://github.com/google/re2/archive/2024-07-02.tar.gz",
+        repo_mapping = {"@abseil-cpp": "@com_google_absl"},
     )
