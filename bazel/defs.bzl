@@ -19,20 +19,38 @@ def _optimized_wasm_cc_binary_transition_impl(settings, attr):
     # Define STANDALONE_WASM at compile time as well as link time (below).
     # This fixes Abseil by not including Emscripten JS stacktraces + symbolization.
     # TODO(martijneken): Remove after Abseil stops using this define.
+
+    copts = list(settings["//command_line_option:copt"])
+    copts.append("-O3")
+    copts.append("-DSTANDALONE_WASM")
+
+    linkopts = list(settings["//command_line_option:linkopt"])
+    linkopts.append("-O3")
+
+    features = list(settings["//command_line_option:features"])
+    # Enable native wasm exceptions, see https://emscripten.org/docs/porting/exceptions.html.
+    features.append("wasm_exceptions")
+    features.append("wasm_sjlj")
+    features.append("-emscripten_sjlj")
+
     return {
-        "//command_line_option:copt": ["-O3", "-flto", "-DSTANDALONE_WASM"],
-        "//command_line_option:cxxopt": [],
-        "//command_line_option:linkopt": [],
+        "//command_line_option:copt": copts,
+        "//command_line_option:linkopt": linkopts,
+        "//command_line_option:features": features,
         "//command_line_option:collect_code_coverage": False,
     }
 
 _optimized_wasm_cc_binary_transition = transition(
     implementation = _optimized_wasm_cc_binary_transition_impl,
-    inputs = [],
+    inputs = [
+        "//command_line_option:copt",
+        "//command_line_option:linkopt",
+        "//command_line_option:features",
+    ],
     outputs = [
         "//command_line_option:copt",
-        "//command_line_option:cxxopt",
         "//command_line_option:linkopt",
+        "//command_line_option:features",
         "//command_line_option:collect_code_coverage",
     ],
 )
