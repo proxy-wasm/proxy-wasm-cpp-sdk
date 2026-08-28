@@ -19,9 +19,9 @@ def proxy_wasm_cpp_sdk_repositories():
     maybe(
         http_archive,
         name = "emsdk",
-        sha256 = "0cb0eabd6e3ceb1a970a2363e67f2b1689c2d83fbeae1e75901213c1f84de2e2",
-        strip_prefix = "emsdk-3.1.67/bazel",
-        url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.67.tar.gz",
+        sha256 = "2d3292d508b4f5477f490b080b38a34aaefed43e85258a1de72cb8dde3f8f3af",
+        strip_prefix = "emsdk-4.0.6/bazel",
+        url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.6.tar.gz",
     )
 
     # protobuf depends on rules_python py_repositories
