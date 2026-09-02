@@ -1,0 +1,28 @@
+{
+  "homepage": "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk",
+  "maintainers": [
+    {
+      "name": "Piotr Sikora",
+      "email": "piotrsikora@google.com",
+      "github": "PiotrSikora",
+      "github_user_id": 190297
+    },
+    {
+      "name": "Martijn Eken",
+      "email": "martijneken@google.com",
+      "github": "martijneken",
+      "github_user_id": 2081190
+    },
+    {
+      "name": "Michael Warres",
+      "email": "mpwarres@google.com",
+      "github": "mpwarres",
+      "github_user_id": 156047
+    }
+  ],
+  "repository": [
+    "github:proxy-wasm/proxy-wasm-cpp-sdk"
+  ],
+  "versions": [],
+  "yanked_versions": {}
+}
